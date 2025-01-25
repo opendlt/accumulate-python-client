@@ -1,4 +1,3 @@
-```markdown
 # Accumulate Python Client
 
 ![Accumulate](./accumulate_logo.png)
