@@ -1,0 +1,36 @@
+# Byte-compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment directory
+venv/
+
+# Coverage reports
+htmlcov/
+*.cover
+.coverage
+*.lcov
+
+# pytest cache directory
+.pytest_cache/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# macOS-specific files
+.DS_Store
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Python packaging files
+*.egg-info/
+build/
+dist/
+
+# IDE-specific files
+.vscode/
+.idea/
+*.swp
