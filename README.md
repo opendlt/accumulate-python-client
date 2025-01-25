@@ -1,6 +1,7 @@
+```markdown
 # Accumulate Python Client
 
-![Accumulate](https://accumulate.network/assets/img/logo.svg)
+![Accumulate](./accumulate_logo.png)
 
 The **Accumulate Python Client** is a robust library designed for developers to interact seamlessly with the [Accumulate Protocol](https://accumulatenetwork.io/). This library simplifies working with accounts, transactions, signatures, querying blockchain data, and more within the Accumulate blockchain ecosystem.
 
@@ -36,9 +37,9 @@ from accumulate.api.client import AccumulateClient
 # Initialize the client
 client = AccumulateClient(base_url="<Endpoint>")
 
-Endpoints
-* Testnet Endpoint: https://testnet.accumulatenetwork.io/v2
-* Mainnet Endpoint: https://mainnet.accumulatenetwork.io/v2
+# Endpoints
+# Testnet: https://testnet.accumulatenetwork.io/v2
+# Mainnet: https://mainnet.accumulatenetwork.io/v2
 
 # Query account information
 response = client.query_account("acc://example_account")
@@ -47,82 +48,52 @@ print(response)
 
 ---
 
-## Library Overview
+## Project Structure
 
-The library is structured to provide modular and extensible components for various blockchain operations. Below is a high-level overview of the project structure:
-
-### Core Structure
+Below is an overview of the project structure, highlighting key components and their purposes:
 
 ```plaintext
-C:.
-│   LICENSE                # Terms for using the library
-│   pyproject.toml         # Configuration for Python dependencies, metadata, and build systems
-│   README.md              # Documentation for setup, usage, and API reference
-│   requirements.txt       # Python dependencies for the project
-│   setup.py               # Script for packaging and installation
+accumulate-python-client/
 │
-├───accumulate
-│   │   __init__.py        # Initializes the main package
-│   │
-│   ├───api
-│   │   │   client.py          # Main interface for interacting with the API
-│   │   │   context.py         # Context management utilities for requests
-│   │   │   endpoints.py       # Definitions and handlers for API endpoints
-│   │   │   exceptions.py      # Custom error handling utilities
-│   │   │   querier.py         # Utilities for querying blockchain data
-│   │   │   transport.py       # Network communication layer abstraction
-│   │
-│   ├───models
-│   │   │   AccountAuthOperations.py  # Models for operations on account authentication
-│   │   │   accounts.py               # Models for account-related structures and properties
-│   │   │   address.py                # Models and utilities for managing blockchain addresses
-│   │   │   auth.py                   # Models for account authentication and authority management
-│   │   │   base_transactions.py      # Base models for constructing transactions
-│   │   │   credits.py                # Models for managing credit balances and transactions
-│   │   │   data_entries.py           # Models for data entry management within the blockchain
-│   │   │   enums.py                  # Enumerations for constants like transaction and query types
-│   │   │   errors.py                 # Models for representing error codes and handling exceptions
-│   │   │   events.py                 # Models for event-related data and blockchain subscriptions
-│   │   │   faucet.py                 # Models for interacting with the Accumulate faucet
-│   │   │   fee_schedule.py           # Models and utilities for defining network fee schedules
-│   │   │   general.py                # General-purpose models for blockchain metadata and utilities
-│   │   │   key_management.py         # Models for key management and specifications
-│   │   │   node_info.py              # Models for node and network information
-│   │   │   options.py                # Models for defining request options and filters
-│   │   │   protocol.py               # Protocol-level constants and configurations
-│   │   │   queries.py                # Models for constructing and serializing API queries
-│   │   │   records.py                # Models for organizing and managing blockchain data records
-│   │   │   responses.py              # Models for handling API responses
-│   │   │   service.py                # Models for managing services and operations
-│   │   │   signatures.py             # Models for cryptographic signatures and validation
-│   │   │   submission.py             # Models for data submission to the blockchain
-│   │   │   transactions.py           # Models for constructing and managing blockchain transactions
-│   │   │   transaction_results.py    # Models for handling transaction results
-│   │   │   txid_set.py               # Models for managing sets of transaction IDs
-│   │   │   types.py                  # General-purpose utilities for shared data types and counters
-│   │   │   __init__.py               # Exports all models for the `models` package
-│   │
-│   ├───signing
-│   │   │   builder.py                # Tools for constructing transaction payloads
-│   │   │   signature_handler.py      # Cryptographic signature management
-│   │   │   signer.py                 # Transaction signing tools
-│   │   │   timestamp.py              # Utilities for handling timestamps
-│   │
-│   ├───utils
-│   │   │   address_parse.py          # Utilities for parsing blockchain addresses
-│   │   │   encoding.py               # Tools for encoding/decoding data
-│   │   │   validation.py             # Input validation utilities
-│   │   │   ...                       # Additional general-purpose utilities
+├── accumulate/            # Main library package
+│   ├── api/               # API client and communication layer
+│   ├── models/            # Data models for accounts, transactions, and responses
+│   ├── signing/           # Cryptographic signing utilities
+│   ├── utils/             # General utilities (e.g., encoding, validation)
+│   └── __init__.py        # Initializes the main package
 │
-├───docs
-│       api_reference.md              # Comprehensive API documentation
+├── tests/                 # Unit and integration tests
+├── demo/                  # Example scripts and usage demonstrations
+├── docs/                  # Documentation for the library (e.g., API reference)
+│
+├── LICENSE                # License for the project
+├── README.md              # Project documentation (you’re reading this!)
+├── requirements.txt       # Project dependencies
+├── setup.py               # Packaging and installation script
+└── pyproject.toml         # Build system configuration
 ```
+
+This structure provides a high-level overview, making it easy to navigate and understand the project.
 
 ---
 
 ## Documentation
 
-Detailed usage instructions, examples, and API references are available in the `docs` directory. Check out `docs/api_reference.md` for complete API details.
+Detailed usage instructions, examples, and API references are available in the `docs` directory. Key documentation includes:
+
+- [`docs/api_reference.md`](docs/api_reference.md): Comprehensive API details.
+
+---
+
+## Contributing
+
+Contributions are welcome! If you’d like to improve this library, submit a pull request or open an issue.
+
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feature-name`.
+3. Commit your changes: `git commit -m "Description of changes"`.
+4. Push to the branch: `git push origin feature-name`.
+5. Open a pull request.
 
 ---
 
@@ -135,3 +106,4 @@ This project is licensed under the terms of the MIT License. See the `LICENSE` f
 ## Acknowledgements
 
 This library was developed by **Jason Gregoire** for [OpenDLT.org](https://opendlt.org), with a mission to leverage Distributed Ledger Technology (DLT) for positive global change.
+```
