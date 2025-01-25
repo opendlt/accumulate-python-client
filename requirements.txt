@@ -1,0 +1,46 @@
+# C:\Accumulate_Stuff\accumulate-python-client\requirements.txt
+
+# Cryptography Libraries
+ecdsa==0.18.0  # ECDSA and Bitcoin-like signatures
+eth-keys==0.6.1 # Ethereum key management and signing
+pycryptodome==3.17.0  # RSA key management and signing
+cryptography==44.0.0  # Modern cryptographic library for hashing and key management
+bitcoin==1.1.42
+base58==2.1.1
+
+# WebSocket Communication
+websockets==10.4  # WebSocket protocol support
+
+# Utility Libraries
+requests==2.31.0  # HTTP requests for REST/JSON-RPC endpoints
+protobuf==4.24.3  # Protocol Buffers for serialization
+
+# Data Serialization and Encoding
+jsonschema==4.19.0  # JSON validation
+msgpack==1.0.5  # MessagePack serialization
+
+# Parsing, Date, and Cron Libraries
+croniter==1.4.1  # Cron expression parsing
+
+# Base58
+base58==2.1.1  # Base58 encoding
+
+# Type Checking and Utility Helpers
+typing-extensions==4.7.1  # Extended typing support for older Python versions
+
+# Async and Context Libraries
+async-timeout==4.0.3  # Async context management and timeouts
+
+# Development and Testing Tools
+pytest==7.4.0  # Testing framework
+pytest-asyncio 0.25.2  # Async testing support
+pytest-mock==3.11.1  # Mocking support for testing
+pytest-cov==6.0.0 # Test coverage reports
+tiktoken==0.8.0 # BPE tokeniser
+coverage==7.6.10
+
+# Logging and Debugging Tools, testing
+loguru==0.7.0  # Advanced logging for debug information
+
+# RPC Calls
+httpx==0.28.1
