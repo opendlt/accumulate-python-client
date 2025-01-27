@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\txid.py
+# accumulate-python-client\accumulate\models\txid.py
 
 import json
 from typing import TYPE_CHECKING

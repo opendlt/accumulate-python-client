@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\utils\__init__.py
+# accumulate-python-client\accumulate\utils\__init__.py
 
 from .encoding import (
     EncodingError,

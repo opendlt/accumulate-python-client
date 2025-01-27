@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_enums.py
+# accumulate-python-client\tests\test_models\test_enums.py
 
 import pytest
 from accumulate.models.enums import (

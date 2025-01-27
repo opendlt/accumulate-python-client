@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_utils\test_address_parse.py
+# accumulate-python-client\tests\test_utils\test_address_parse.py
 
 import pytest
 import base58

@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\enums.py 
+# accumulate-python-client\accumulate\models\enums.py 
 
 from enum import Enum
 from typing import Optional
@@ -105,43 +105,61 @@ class DataEntryType(Enum):
     ACCUMULATE = 2
     DOUBLE_HASH = 3
 
-
-
-# Transaction Types
 class TransactionType(Enum):
     """Transaction types supported by the Accumulate blockchain."""
-    UNKNOWN = 0
-    CREATE_IDENTITY = 1
-    CREATE_TOKEN_ACCOUNT = 2
-    SEND_TOKENS = 3
-    CREATE_DATA_ACCOUNT = 4
-    WRITE_DATA = 5
-    ACME_FAUCET = 7
-    ISSUE_TOKENS = 9
-    BURN_TOKENS = 10
-    CREATE_KEY_PAGE = 12
-    CREATE_KEY_BOOK = 13
-    ADD_CREDITS = 14
-    UPDATE_KEY_PAGE = 15
-    UPDATE_ACCOUNT_AUTH = 19
-    DIRECTORY_ANCHOR = 20
-    BLOCK_VALIDATOR_ANCHOR = 21
-    SYNTHETIC_CREATE_IDENTITY = 49
-    SYNTHETIC_WRITE_DATA = 50
-    SYNTHETIC_DEPOSIT_TOKENS = 51
-    SYNTHETIC_BURN_TOKENS = 53
+    # User Transactions
+    UNKNOWN = 0x00
+    CREATE_IDENTITY = 0x01
+    CREATE_TOKEN_ACCOUNT = 0x02
+    SEND_TOKENS = 0x03
+    CREATE_DATA_ACCOUNT = 0x04
+    WRITE_DATA = 0x05
+    WRITE_DATA_TO = 0x06
+    ACME_FAUCET = 0x07
+    CREATE_TOKEN = 0x08
+    ISSUE_TOKENS = 0x09
+    BURN_TOKENS = 0x0A
+    CREATE_LITE_TOKEN_ACCOUNT = 0x0B
+    CREATE_KEY_PAGE = 0x0C
+    CREATE_KEY_BOOK = 0x0D
+    ADD_CREDITS = 0x0E
+    UPDATE_KEY_PAGE = 0x0F
+    LOCK_ACCOUNT = 0x10
+    BURN_CREDITS = 0x11
+    TRANSFER_CREDITS = 0x12
+    UPDATE_ACCOUNT_AUTH = 0x15
+    UPDATE_KEY = 0x16
+    NETWORK_MAINTENANCE = 0x2E
+    ACTIVATE_PROTOCOL_VERSION = 0x2F
+    REMOTE = 0x30
+
+    # Systems Transactions
+    SYNTHETIC_CREATE_IDENTITY = 0x31
+    SYNTHETIC_WRITE_DATA = 0x32
+    SYNTHETIC_DEPOSIT_TOKENS = 0x33
+    SYNTHETIC_DEPOSIT_CREDITS = 0x34
+    SYNTHETIC_BURN_TOKENS = 0x35
+    SYNTHETIC_FORWARD_TRANSACTION = 0x36
+
+    ##### SYSTEM TRANSACTIONS #####
+    SYSTEM_GENESIS = 0x60
+    DIRECTORY_ANCHOR = 0x61
+    BLOCK_VALIDATOR_ANCHOR = 0x62
+    SYSTEM_WRITE_DATA = 0x63
+
 
     def is_user(self) -> bool:
         """Check if the transaction type is a user transaction."""
-        return self.value <= 19
+        return self.value < 0x31  # Synthetic transactions start at 0x31
 
     def is_synthetic(self) -> bool:
         """Check if the transaction type is synthetic."""
-        return 49 <= self.value <= 53
+        return 0x31 <= self.value <= 0x36
 
     def is_anchor(self) -> bool:
         """Check if the transaction type is an anchor transaction."""
         return self in {TransactionType.DIRECTORY_ANCHOR, TransactionType.BLOCK_VALIDATOR_ANCHOR}
+
 
 # Key Page Operations
 class KeyPageOperationType(Enum):

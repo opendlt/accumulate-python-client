@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\api\exceptions.py
+# accumulate-python-client\accumulate\api\exceptions.py
 
 class AccumulateError(Exception):
     """Base class for all custom exceptions in the Accumulate client."""

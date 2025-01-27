@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\utils\encoding.py 
+# accumulate-python-client\accumulate\utils\encoding.py 
 
 import json
 import binascii
@@ -72,15 +72,15 @@ class DurationFields:
     """Data class for handling duration in seconds and nanoseconds."""
 
     def __init__(self, seconds: int = 0, nanoseconds: int = 0):
-        self.seconds = seconds
-        self.nanoseconds = nanoseconds
+        self.seconds = seconds #
+        self.nanoseconds = nanoseconds #
 
     def to_dict(self) -> Dict[str, int]:
-        return {"seconds": self.seconds, "nanoseconds": self.nanoseconds}
+        return {"seconds": self.seconds, "nanoseconds": self.nanoseconds} #
 
     @staticmethod
     def from_dict(data: Dict[str, int]) -> "DurationFields":
-        return DurationFields(
+        return DurationFields( #
             seconds=data.get("seconds", 0), nanoseconds=data.get("nanoseconds", 0)
         )
 
@@ -108,19 +108,28 @@ def timedelta_to_binary(value: timedelta) -> bytes:
     """Convert a timedelta to a binary representation."""
     seconds = int(value.total_seconds())
     nanoseconds = int((value.total_seconds() - seconds) * 1e9)
+
+    # Ensure values fit within the signed 64-bit integer range
+    max_seconds = 2**63 - 1  # Max value for a signed 64-bit integer
+    if not (-max_seconds <= seconds <= max_seconds):
+        raise EncodingError("Seconds value is out of range for binary encoding")
+    if not (0 <= nanoseconds < 1e9):
+        raise EncodingError("Nanoseconds value is out of range for binary encoding")
+
     try:
         return struct.pack(">qq", seconds, nanoseconds)
     except struct.error as e:
         raise EncodingError("Failed to pack timedelta into binary") from e
 
 
+
 def timedelta_from_binary(value: bytes) -> timedelta:
     """Convert a binary representation back to a timedelta."""
-    try:
-        seconds, nanoseconds = struct.unpack(">qq", value)
-        return timedelta(seconds=seconds, microseconds=nanoseconds / 1000)
-    except struct.error as e:
-        raise EncodingError("Invalid binary timedelta") from e
+    try: #
+        seconds, nanoseconds = struct.unpack(">qq", value) #
+        return timedelta(seconds=seconds, microseconds=nanoseconds / 1000) #
+    except struct.error as e: #
+        raise EncodingError("Invalid binary timedelta") from e #
 
 
 # --- Datetime Encoding ---
@@ -132,7 +141,7 @@ def datetime_to_json(value: Optional[datetime]) -> Optional[str]:
 def datetime_from_json(value: Optional[str]) -> Optional[datetime]:
     """Convert an ISO format string back to a datetime."""
     if value is None:
-        return None
+        return None #
     try:
         return datetime.fromisoformat(value)
     except ValueError as e:
@@ -142,18 +151,25 @@ def datetime_from_json(value: Optional[str]) -> Optional[datetime]:
 def datetime_to_binary(value: datetime) -> bytes:
     """Convert a datetime to a binary representation."""
     try:
+        # Ensure the datetime is within a valid range for timestamp conversion
+        if value < datetime(1970, 1, 1):
+            raise ValueError("Datetime value must not be earlier than the Unix epoch.")
         return struct.pack(">q", int(value.timestamp()))
+    except ValueError as e:
+        raise EncodingError(str(e)) from e  # Pass the original error message
     except struct.error as e:
         raise EncodingError("Failed to pack datetime into binary") from e
 
 
+
+
 def datetime_from_binary(value: bytes) -> datetime:
     """Convert a binary representation back to a datetime."""
-    try:
-        timestamp = struct.unpack(">q", value)[0]
-        return datetime.fromtimestamp(timestamp)
-    except struct.error as e:
-        raise EncodingError("Invalid binary datetime") from e
+    try: #
+        timestamp = struct.unpack(">q", value)[0] #
+        return datetime.fromtimestamp(timestamp) #
+    except struct.error as e: #
+        raise EncodingError("Invalid binary datetime") from e #
 
 
 # --- Generic JSON Serialization ---
@@ -164,9 +180,9 @@ def any_to_json(value: Any) -> Union[str, dict, int, float]:
     if isinstance(value, (int, float, str)):
         return value
     if isinstance(value, datetime):
-        return datetime_to_json(value)
+        return datetime_to_json(value) #
     if isinstance(value, timedelta):
-        return duration_to_json(value)
+        return duration_to_json(value) #
     if isinstance(value, dict):
         return value  # Keep dict as-is
     raise EncodingError(f"Unsupported value type: {type(value).__name__}")
@@ -177,7 +193,7 @@ def any_from_json(value: Any) -> Any:
     if isinstance(value, dict):
         if "seconds" in value and "nanoseconds" in value:
             return duration_from_json(value)
-        return value
+        return value #
     if isinstance(value, (str, int, float)):
         return value
     raise EncodingError(f"Cannot parse value from type {type(value).__name__}")
@@ -192,11 +208,14 @@ class EnumValue:
         return self.value
 
     def set_enum_value(self, value: int) -> bool:
+        if not isinstance(value, int):  # Ensure the value is an integer
+            raise ValueError("Enum value must be an integer.")
         try:
             self.value = value
             return True
-        except ValueError:
+        except ValueError:  # This block is now redundant but kept for consistency
             return False
+
 
 # --- Split Duration Helper ---
 def split_duration(duration: Union[timedelta, int, float, Decimal]) -> tuple[int, int]:
@@ -206,12 +225,18 @@ def split_duration(duration: Union[timedelta, int, float, Decimal]) -> tuple[int
     :return: A tuple of (seconds, nanoseconds).
     """
     if isinstance(duration, timedelta):
-        seconds = int(duration.total_seconds())
-        nanoseconds = round((duration.total_seconds() - seconds) * 1e9)
+        total_seconds = duration.total_seconds()
+        seconds = int(total_seconds)
+        nanoseconds = round((Decimal(total_seconds) - Decimal(seconds)) * Decimal(1e9))
+    elif isinstance(duration, Decimal):
+        seconds = int(duration)
+        nanoseconds = round((duration - Decimal(seconds)) * Decimal(1e9))
     else:
         seconds = int(duration)
         nanoseconds = round((duration - seconds) * 1e9)
     return seconds, nanoseconds
+
+
 
 # --- Bytes Copy ---
 def bytes_copy(data: bytes) -> bytes:
@@ -318,7 +343,7 @@ def unmarshal_string(data: bytes) -> str:
     start_index = len(marshal_uint(length))  # Skip the length prefix
     end_index = start_index + length
     if len(data) < end_index:
-        raise EncodingError(f"Not enough data to unmarshal string: Expected {end_index}, got {len(data)}")
+        raise EncodingError(f"Not enough data to unmarshal string: Expected {end_index}, got {len(data)}") #
     result = data[start_index:end_index].decode("utf-8")
     return result.strip('"')  # Remove any unexpected quotes
 

@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\options.py
+# accumulate-python-client\accumulate\models\options.py
 
 from dataclasses import dataclass, field
 from typing import Optional

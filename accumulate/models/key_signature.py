@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\key_signature.py
+# accumulate-python-client\accumulate\models\key_signature.py
 
 from abc import ABC, abstractmethod
 from typing import List, Optional

@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_address.py
+# accumulate-python-client\tests\test_models\test_address.py
 
 import unittest
 import hashlib

@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\utils\eip712.py
+# accumulate-python-client\accumulate\utils\eip712.py
 
 import hashlib
 import json

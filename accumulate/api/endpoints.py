@@ -1,4 +1,4 @@
- # C:\Accumulate_Stuff\accumulate-python-client\accumulate\api\endpoints.py
+ # accumulate-python-client\accumulate\api\endpoints.py
 
 
 from typing import Dict, List, Any

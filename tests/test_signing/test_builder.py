@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_signing\test_builder.py 
+# accumulate-python-client\tests\test_signing\test_builder.py 
 
 import pytest
 from unittest.mock import Mock

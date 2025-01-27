@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\signing\builder.py
+# accumulate-python-client\accumulate\signing\builder.py
 
 from datetime import datetime, timezone
 from typing import List, Optional

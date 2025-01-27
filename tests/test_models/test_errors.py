@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_errors.py
+# accumulate-python-client\tests\test_models\test_errors.py
 
 import pytest
 from accumulate.models.errors import (

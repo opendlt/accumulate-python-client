@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_api\test_context.py
+# accumulate-python-client\tests\test_api\test_context.py
 
 import pytest
 from accumulate.api.context import RequestContext

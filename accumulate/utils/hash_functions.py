@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\utils\hash_functions.py
+# accumulate-python-client\accumulate\utils\hash_functions.py
 
 import hashlib
 from eth_utils import keccak
@@ -66,10 +66,13 @@ def eth_address(public_key: bytes) -> str:
     """
     Generate an ETH address from a public key.
     """
+    if len(public_key) == 65:  # Uncompressed key
+        public_key = public_key[1:]  # Remove the prefix
     if len(public_key) != 64:
         raise ValueError("Invalid public key length for ETH")
     pub_hash = public_key_hash(public_key, SignatureType.ETH)
     return "0x" + pub_hash.hex()
+
 
 
 def hash_data(data: bytes) -> bytes:

@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\setup.py 
+# accumulate-python-client\setup.py 
 
 from setuptools import setup, find_packages
 

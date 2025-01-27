@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_api\test_endpoints.py  
+# accumulate-python-client\tests\test_api\test_endpoints.py  
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock

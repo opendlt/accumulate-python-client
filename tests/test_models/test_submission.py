@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_submission.py
+# accumulate-python-client\tests\test_models\test_submission.py
 
 import unittest
 from accumulate.models.submission import Submission

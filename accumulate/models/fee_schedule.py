@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\fee_schedule.py
+# accumulate-python-client\accumulate\models\fee_schedule.py
 
 from typing import Union, List
 from accumulate.utils.url import URL

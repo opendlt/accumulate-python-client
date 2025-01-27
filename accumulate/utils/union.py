@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\utils\union.py
+# accumulate-python-client\accumulate\utils\union.py
 
 import json
 from typing import  Union, Any

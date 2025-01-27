@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\utils\validation.py 
+# accumulate-python-client\accumulate\utils\validation.py 
 
 import re
 from urllib.parse import urlparse

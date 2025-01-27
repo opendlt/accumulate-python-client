@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\signature_types.py
+# accumulate-python-client\accumulate\models\signature_types.py
 
 from enum import Enum
 

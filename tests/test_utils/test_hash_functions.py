@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_utils\test_hash_functions.py
+# accumulate-python-client\tests\test_utils\test_hash_functions.py
 
 import pytest
 import hashlib

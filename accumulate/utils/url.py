@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\utils\url.py 
+# accumulate-python-client\accumulate\utils\url.py 
 
 import logging
 import hashlib
@@ -47,10 +47,10 @@ def invalid_hash(url: str, error_details: Any) -> InvalidHashError:
 
 
 class URL:
-    def __init__(self, user_info: str = "", authority: str = "", path: str = "", query: str = "", fragment: str = ""):
+    def __init__(self, user_info: str = "", authority: Optional[str] = None, path: Optional[str] = "", query: str = "", fragment: str = ""):
         self.user_info = user_info
-        self.authority = authority
-        self.path = self._normalize_path(path)
+        self.authority = authority or ""
+        self.path = self._normalize_path(path or "") 
         self.query = query
         self.fragment = fragment
 
@@ -166,7 +166,8 @@ class URL:
             components = []
             if self.user_info:
                 components.append(self.user_info)
-            components.append(self.authority.replace("acc://", "", 1))  
+            if self.authority:
+                components.append(self.authority.replace("acc://", "", 1))
             if self.path:
                 components.append(self.path)
             if self.query:

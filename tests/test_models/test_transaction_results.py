@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_transaction_results.py
+# accumulate-python-client\tests\test_models\test_transaction_results.py
 
 import unittest
 from accumulate.models.transaction_results import (

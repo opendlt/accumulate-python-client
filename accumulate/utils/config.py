@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\utils\config.py
+# accumulate-python-client\accumulate\utils\config.py
 
 import os
 

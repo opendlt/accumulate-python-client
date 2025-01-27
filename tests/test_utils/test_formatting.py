@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_utils\test_formatting.py
+# accumulate-python-client\tests\test_utils\test_formatting.py
 
 import pytest
 from decimal import Decimal

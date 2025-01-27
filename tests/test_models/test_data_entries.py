@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_data_entries.py
+# accumulate-python-client\tests\test_models\test_data_entries.py
 
 import pytest
 import hashlib

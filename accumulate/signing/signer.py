@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\signing\signer.py 
+# accumulate-python-client\accumulate\signing\signer.py 
 
 import hashlib
 from typing import Optional, Dict, Callable, Union
@@ -18,6 +18,7 @@ from accumulate.utils.hash_functions import (
     eth_address,
     public_key_hash,
 )
+from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
 
 class Signer:
     """Handles signing operations for various signature types."""
@@ -35,64 +36,90 @@ class Signer:
 
         elif signature_type in [SignatureType.BTC, SignatureType.BTCLegacy]:
             priv_key = ec.derive_private_key(int.from_bytes(private_key, "big"), ec.SECP256K1())
-            signature["public_key"] = priv_key.public_key().public_bytes(
-                encoding="compressed" if signature_type == SignatureType.BTC else "uncompressed"
+            public_key = priv_key.public_key().public_bytes(
+                encoding=serialization.Encoding.X962,
+                format=serialization.PublicFormat.CompressedPoint if signature_type == SignatureType.BTC
+                else serialization.PublicFormat.UncompressedPoint
             )
+            signature["public_key"] = public_key
+            signature["btc_address"] = btc_address(public_key)
+
 
         elif signature_type == SignatureType.ETH:
             eth_key = eth_keys.PrivateKey(private_key)
-            signature["public_key"] = eth_key.public_key.to_bytes()
+            public_key = eth_key.public_key.to_bytes()
+            # Use the eth_address utility function
+            signature["eth_address"] = eth_address(public_key)
 
         elif signature_type == SignatureType.RSA_SHA256:
             private_key_obj = load_pem_private_key(private_key, password=None, backend=default_backend())
             if isinstance(private_key_obj, rsa.RSAPrivateKey):
-                signature["public_key"] = private_key_obj.public_key().public_bytes()
+                signature["public_key"] = private_key_obj.public_key().public_bytes(
+                    encoding=serialization.Encoding.PEM,
+                    format=serialization.PublicFormat.SubjectPublicKeyInfo
+                )
 
         elif signature_type == SignatureType.ECDSA_SHA256:
             priv_key = ec.derive_private_key(int.from_bytes(private_key, "big"), ec.SECP256K1())
-            signature["public_key"] = priv_key.public_key().public_bytes()
+            signature["public_key"] = priv_key.public_key().public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo
+            )
 
         else:
             raise ValueError(f"Cannot set the public key for {signature_type}")
 
+
+
     def sign_transaction(self, signature_type: SignatureType, private_key: bytes, message: bytes) -> Dict:
         """Sign a transaction with the appropriate signature type."""
+        signature = {}  # Initialize the signature dictionary
+
         if signature_type in [SignatureType.LEGACY_ED25519, SignatureType.ED25519]:
             private_key_obj = ed25519.Ed25519PrivateKey.from_private_bytes(private_key)
-            signature = private_key_obj.sign(message)
-            return {"signature": signature}
+            signature["signature"] = private_key_obj.sign(message)
+            return signature
 
         elif signature_type == SignatureType.BTC:
             priv_key = ec.derive_private_key(int.from_bytes(private_key, "big"), ec.SECP256K1())
-            signature = priv_key.sign(message, ec.ECDSA(hashes.SHA256()))
-            return {"signature": signature}
+            signature["signature"] = priv_key.sign(message, ec.ECDSA(hashes.SHA256()))
+            return signature
 
         elif signature_type == SignatureType.ETH:
             eth_key = eth_keys.PrivateKey(private_key)
+            public_key = eth_key.public_key.to_bytes()
+            signature["public_key"] = public_key
+            signature["eth_address"] = eth_address(public_key)
             sig = eth_key.sign_msg_hash(hashlib.sha256(message).digest())
-            return {"signature": sig.to_bytes()}
+            signature["signature"] = sig.to_bytes()
+            return signature
 
         elif signature_type == SignatureType.RSA_SHA256:
             private_key_obj = load_pem_private_key(private_key, password=None, backend=default_backend())
             if isinstance(private_key_obj, rsa.RSAPrivateKey):
-                signature = private_key_obj.sign(message, padding=rsa.PKCS1v15(), algorithm=Prehashed(hashes.SHA256()))
-                return {"signature": signature}
+                signature["signature"] = private_key_obj.sign(
+                    message,
+                    padding=PKCS1v15(),
+                    algorithm=hashes.SHA256()
+                )
+                return signature
 
         elif signature_type == SignatureType.ECDSA_SHA256:
             priv_key = ec.derive_private_key(int.from_bytes(private_key, "big"), ec.SECP256K1())
-            signature = priv_key.sign(message, ec.ECDSA(hashes.SHA256()))
-            return {"signature": signature}
+            signature["signature"] = priv_key.sign(message, ec.ECDSA(hashes.SHA256()))
+            return signature
 
         else:
             raise ValueError(f"Unsupported signature type: {signature_type}")
 
+
     def btc_address(self, public_key: bytes) -> str:
         """Calculate a BTC address from the public key."""
-        return btc_address(public_key)
+        return btc_address(public_key) #
 
     def eth_address(self, public_key: bytes) -> str:
         """Calculate an ETH address from the public key."""
-        return eth_address(public_key)
+        return eth_address(public_key) #
 
     def sign_rcd1(self, private_key: bytes, message: bytes) -> Dict:
         """Sign a message using RCD1 signature."""

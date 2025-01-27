@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_node_info.py
+# accumulate-python-client\tests\test_models\test_node_info.py
 
 import unittest
 from unittest.mock import patch, MagicMock

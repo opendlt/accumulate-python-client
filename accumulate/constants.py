@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\constants.py
+# accumulate-python-client\accumulate\constants.py
 from decimal import Decimal
 
 # Core Constants

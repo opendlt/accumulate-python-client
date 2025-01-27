@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_utils\test_rational.py
+# accumulate-python-client\tests\test_utils\test_rational.py
 
 import pytest
 from accumulate.utils.rational import Rational  # Corrected import

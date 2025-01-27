@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\credits.py
+# accumulate-python-client\accumulate\models\credits.py
 
 class CreditsAccount:
     """Represents an account with a credit balance."""

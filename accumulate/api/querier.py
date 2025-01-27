@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\api\querier.py 
+# accumulate-python-client\accumulate\api\querier.py 
 
 import logging
 import importlib
@@ -51,8 +51,12 @@ class Querier:
             self.logger.debug("Query response: %s", response)
             return self._deserialize_response(response, result_type)
         except Exception as e:
-            self.logger.error("Query failed: %s", e)
-            raise AccumulateError(f"Query failed: {e}")
+            error_message = f"Query failed: {e}"
+            self.logger.error(error_message)
+            raise AccumulateError(error_message) from e
+
+
+
 
 
     async def query_record(self, ctx: RequestContext, scope: URL, query: Query, result_type: Type[T]) -> T:
@@ -94,8 +98,10 @@ class Querier:
 
             return events
         except Exception as e:
-            self.logger.error("Error in query_events: %s", e)
-            raise
+            error_message = f"Error in query_events: {e}"
+            self.logger.error(error_message)
+            raise AccumulateError(error_message) from e
+
 
 
 
@@ -107,7 +113,7 @@ class Querier:
 
             if issubclass(result_type, RecordRange):
                 if not isinstance(data, RecordRange):
-                    raise AccumulateError(f"Expected RecordRange, got {type(data)}")
+                    raise AccumulateError(f"Expected RecordRange, got {type(data)}") #
 
                 # Use range_of for validation
                 return range_of(data, getattr(data, "item_type", Record))
@@ -121,45 +127,44 @@ class Querier:
 
     async def query_generic(self, ctx: RequestContext, scope: URL, query: Query, result_type: Type[T]) -> T:
         """Generic query handler."""
-        response = await self.query(ctx, str(scope), query)
+        response = await self.query(ctx, str(scope), query, result_type)  # Pass result_type here
         return self._deserialize_response(response, result_type)
-
 
     async def query_account(self, ctx: RequestContext, account: URL, query: Query) -> AccountRecord:
         """Query account details."""
-        result = await self.query_record(ctx, account, query, AccountRecord)
-        if not isinstance(result, AccountRecord):
-            raise AccumulateError(f"Unexpected response type: {type(result)} (expected AccountRecord)")
-        return result
+        result = await self.query_record(ctx, account, query, AccountRecord) #
+        if not isinstance(result, AccountRecord): #
+            raise AccumulateError(f"Unexpected response type: {type(result)} (expected AccountRecord)") #
+        return result #
 
     async def query_chain(self, ctx: RequestContext, scope: URL, query: Query) -> ChainRecord:
         """Query chain details."""
         result = await self.query_record(ctx, scope, query, ChainRecord)
         if not isinstance(result, ChainRecord):
-            raise AccumulateError(f"Unexpected response type: {type(result)} (expected ChainRecord)")
+            raise AccumulateError(f"Unexpected response type: {type(result)} (expected ChainRecord)") #
         return result
 
     async def query_chain_entries(self, ctx: RequestContext, scope: URL, query: Query) -> RecordRange[ChainEntryRecord]:
         """Query chain entries."""
         result = await self.query_record(ctx, scope, query, RecordRange)
         if not isinstance(result, RecordRange) or not all(isinstance(r, ChainEntryRecord) for r in result.records):
-            raise AccumulateError(f"Unexpected response type: {type(result)} or invalid nested types")
+            raise AccumulateError(f"Unexpected response type: {type(result)} or invalid nested types") #
         return result
 
     async def query_transaction(self, ctx: RequestContext, txid: URL, query: Query) -> MessageRecord:
         """Query transaction details."""
-        self.logger.debug("Querying transaction for: %s with query: %s", txid, query)
-        result = await self.query_record(ctx, txid, query, MessageRecord)
-        if not isinstance(result, MessageRecord):
-            raise AccumulateError(f"Unexpected response type: {type(result)} (expected MessageRecord)")
-        return result
+        self.logger.debug("Querying transaction for: %s with query: %s", txid, query) #
+        result = await self.query_record(ctx, txid, query, MessageRecord) #
+        if not isinstance(result, MessageRecord): #
+            raise AccumulateError(f"Unexpected response type: {type(result)} (expected MessageRecord)") #
+        return result #
 
 
     async def query_block(self, ctx: RequestContext, scope: URL, query: Query) -> RecordRange:
         """Query block details."""
-        self.logger.debug("Querying block for: %s with query: %s", scope, query)
-        result = await self.query_record(ctx, scope, query, RecordRange)
-        if not isinstance(result, RecordRange):
-            raise AccumulateError(f"Unexpected response type: {type(result)} (expected RecordRange)")
+        self.logger.debug("Querying block for: %s with query: %s", scope, query) #
+        result = await self.query_record(ctx, scope, query, RecordRange) #
+        if not isinstance(result, RecordRange): #
+            raise AccumulateError(f"Unexpected response type: {type(result)} (expected RecordRange)") #
         return result
 

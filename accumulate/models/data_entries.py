@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\data_entries.py
+# accumulate-python-client\accumulate\models\data_entries.py
 
 import hashlib
 from typing import List, Union

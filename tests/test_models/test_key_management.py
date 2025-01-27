@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_key_management.py
+# accumulate-python-client\tests\test_models\test_key_management.py
 
 import unittest
 from accumulate.models.key_management import (

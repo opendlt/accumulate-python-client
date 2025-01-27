@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\records.py
+# accumulate-python-client\accumulate\models\records.py
 
 from dataclasses import dataclass, field
 from typing import List, Optional, Type, TypeVar, Dict, Any, Generic

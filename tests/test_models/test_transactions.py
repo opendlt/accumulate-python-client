@@ -1,8 +1,10 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_transactions.py
+# accumulate-python-client\tests\test_models\test_transactions.py
 
 
 import unittest
 from unittest.mock import MagicMock
+from accumulate.models.enums import TransactionType
+from accumulate.models.errors import AccumulateError, ErrorCode
 from accumulate.models.data_entries import AccumulateDataEntry
 from accumulate.models.transactions import (
     TransactionStatus, WriteData, WriteDataTo, IssueTokens, BurnCredits,
@@ -491,6 +493,389 @@ class TestTransactionModels(unittest.TestCase):
         self.assertTrue(unmarshaled.scratch)
         self.assertFalse(unmarshaled.write_to_state)
         self.assertEqual(unmarshaled.entry.data, [b"mock_chunk"])
+
+
+    def test_transaction_status_delivered(self):
+        """Test the delivered method of TransactionStatus."""
+        # Case 1: Code is OK (delivered is True)
+        status = TransactionStatus(code=ErrorCode.OK.value)
+        self.assertTrue(status.delivered(), "Delivered should return True for OK code")
+
+        # Case 2: Code indicates failure (not delivered)
+        status.code = ErrorCode.FAILED.value
+        self.assertFalse(status.delivered(), "Delivered should return False if code is FAILED")
+
+    def test_transaction_status_failed(self):
+        """Test the failed method of TransactionStatus."""
+        # Case 1: Code is OK (not failed)
+        status = TransactionStatus(code=ErrorCode.OK.value)
+        self.assertFalse(status.failed(), "Failed should return False for OK code")
+
+        # Case 2: Code is FAILED (failed is True)
+        status.code = ErrorCode.FAILED.value
+        self.assertTrue(status.failed(), "Failed should return True for FAILED code")
+
+    def test_transaction_status_remote(self):
+        status = TransactionStatus(code=ErrorCode.FAILED.value)
+        self.assertTrue(status.remote(), "Remote should return True for FAILED code")
+
+        status.code = 0
+        self.assertFalse(status.remote(), "Remote should return False for non-FAILED code")
+
+    def test_transaction_status_pending(self):
+        status = TransactionStatus(code=ErrorCode.DID_PANIC.value)
+        self.assertTrue(status.pending(), "Pending should return True for DID_PANIC code")
+
+        status.code = 0
+        self.assertFalse(status.pending(), "Pending should return False for non-DID_PANIC code")
+
+    def test_transaction_status_set_error(self):
+        """Test the set method of TransactionStatus with an error."""
+        # Case 1: Valid error with a specific code
+        mock_error = AccumulateError(ErrorCode.ENCODING_ERROR, "Encoding failed")
+        status = TransactionStatus()
+        status.set(mock_error)
+        self.assertEqual(status.code, ErrorCode.ENCODING_ERROR.value, "Set should update the code from the error")
+        self.assertEqual(status.error, mock_error, "Set should update the error")
+
+        # Case 2: Error with None code (fallback to UNKNOWN_ERROR)
+        mock_error = AccumulateError(ErrorCode.UNKNOWN_ERROR, None)  # Provide a valid error code
+        status.set(mock_error)
+        self.assertEqual(status.code, ErrorCode.UNKNOWN_ERROR.value, "Set should fallback to UNKNOWN_ERROR if no specific code")
+
+        # Case 3: None error (simulate no error provided)
+        status.set(None)
+        self.assertEqual(status.code, ErrorCode.UNKNOWN_ERROR.value, "Set should fallback to UNKNOWN_ERROR if error is None")
+        self.assertIsNone(status.error, "Error should be None when set with None")
+
+    def test_transaction_status_as_error(self):
+        """Test the as_error method of TransactionStatus."""
+        mock_error = MagicMock()
+        status = TransactionStatus(error=mock_error)
+        self.assertEqual(status.as_error(), mock_error, "As_error should return the error if present")
+
+        status.error = None
+        self.assertIsNone(status.as_error(), "As_error should return None if no error is present")
+
+    def test_transaction_status_add_anchor_signer(self):
+        """Test the add_anchor_signer method of TransactionStatus."""
+        status = TransactionStatus()
+        mock_signature = MagicMock()
+        mock_signature.get_public_key.return_value = "mock_key"
+
+        # Add a signer for the first time
+        status.add_anchor_signer(mock_signature)
+        self.assertIn("mock_key", status.anchor_signers, "Anchor signer should be added to the list")
+
+        # Try adding the same key again
+        status.add_anchor_signer(mock_signature)
+        self.assertEqual(len(status.anchor_signers), 1, "Duplicate anchor signer should not be added")
+
+        # Add a different key
+        mock_signature.get_public_key.return_value = "mock_key_2"
+        status.add_anchor_signer(mock_signature)
+        self.assertIn("mock_key_2", status.anchor_signers, "New anchor signer should be added to the list")
+
+
+    def test_transaction_status_add_signer(self):
+        """Test the add_signer method of TransactionStatus."""
+        status = TransactionStatus()
+        mock_signer = MagicMock()
+        mock_signer.get_url.return_value = "mock_url"
+        mock_signer.get_version.return_value = 1
+
+        # Add a signer for the first time
+        status.add_signer(mock_signer)
+        self.assertIn(mock_signer, status.signers, "Signer should be added to the list")
+
+        # Add a signer with the same URL but a higher version
+        new_signer = MagicMock()
+        new_signer.get_url.return_value = "mock_url"
+        new_signer.get_version.return_value = 2
+        status.add_signer(new_signer)
+        self.assertEqual(status.signers[-1], new_signer, "Signer with a higher version should replace the existing signer")
+
+        # Add a signer with a different URL
+        another_signer = MagicMock()
+        another_signer.get_url.return_value = "mock_url_2"
+        another_signer.get_version.return_value = 1
+        status.add_signer(another_signer)
+        self.assertIn(another_signer, status.signers, "Signer with a new URL should be added to the list")
+
+
+    def test_transaction_status_get_signer(self):
+        """Test the get_signer method of TransactionStatus."""
+        status = TransactionStatus()
+        mock_signer1 = MagicMock()
+        mock_signer1.get_url.return_value = "mock_url_1"
+        mock_signer2 = MagicMock()
+        mock_signer2.get_url.return_value = "mock_url_2"
+
+        # Add signers to the list
+        status.signers = [mock_signer1, mock_signer2]
+
+        # Retrieve an existing signer
+        result = status.get_signer("mock_url_1")
+        self.assertEqual(result, mock_signer1, "get_signer should return the correct signer based on the URL")
+
+        # Try to retrieve a non-existing signer
+        result = status.get_signer("non_existing_url")
+        self.assertIsNone(result, "get_signer should return None for a non-existing URL")
+
+    def test_write_data_type(self):
+        """Test the type method of WriteData."""
+        mock_entry = MagicMock()  # Mock the DataEntry to avoid dependencies
+        write_data = WriteData(entry=mock_entry)
+        self.assertEqual(write_data.type(), TransactionType.WRITE_DATA, "type should return TransactionType.WRITE_DATA")
+
+
+    def test_write_data_unmarshal_invalid_data(self):
+        """Test the unmarshal method of WriteData with invalid data."""
+        mock_entry = MagicMock()
+        mock_entry.marshal.return_value = b"valid_data"
+        write_data = WriteData(entry=mock_entry)
+
+        # Invalid data for entry unmarshalling
+        invalid_data = b"\x01\x01invalid_entry_data"
+
+        # Patch the DataEntry.unmarshal method to raise a ValueError
+        with unittest.mock.patch("accumulate.models.data_entries.DataEntry.unmarshal", side_effect=ValueError("Invalid entry data")):
+            with self.assertRaises(ValueError) as context:
+                write_data.unmarshal(invalid_data)
+
+            self.assertIn("Failed to unmarshal WriteData entry", str(context.exception), "Unmarshal should raise a ValueError with a proper message")
+
+    def test_write_data_to_type(self):
+        """Test the type method of WriteDataTo."""
+        mock_recipient = MagicMock()  # Mock the URL to avoid dependencies
+        mock_entry = MagicMock()  # Mock the DataEntry to avoid dependencies
+        write_data_to = WriteDataTo(recipient=mock_recipient, entry=mock_entry)
+
+        self.assertEqual(
+            write_data_to.type(),
+            TransactionType.WRITE_DATA_TO,
+            "type should return TransactionType.WRITE_DATA_TO"
+    )
+        
+    def test_issue_tokens_type(self):
+        """Test the type method of IssueTokens."""
+        mock_recipient = MagicMock()  # Mock the TokenRecipient to avoid dependencies
+        issue_tokens = IssueTokens(to=[mock_recipient])
+
+        self.assertEqual(
+            issue_tokens.type(),
+            TransactionType.ISSUE_TOKENS,
+            "type should return TransactionType.ISSUE_TOKENS"
+        )
+
+    def test_burn_credits_type(self):
+        """Test the type method of BurnCredits."""
+        burn_credits = BurnCredits(amount=100)
+
+        self.assertEqual(
+            burn_credits.type(),
+            TransactionType.BURN_CREDITS,
+            "type should return TransactionType.BURN_CREDITS"
+        )
+
+    def test_transfer_credits_type(self):
+        """Test the type method of TransferCredits."""
+        mock_recipient = MagicMock()  # Mock the CreditRecipient to avoid dependencies
+        transfer_credits = TransferCredits(to=[mock_recipient])
+
+        self.assertEqual(
+            transfer_credits.type(),
+            TransactionType.TRANSFER_CREDITS,
+            "type should return TransactionType.TRANSFER_CREDITS"
+        )
+
+    def test_create_key_book_type(self):
+        """Test the type method of CreateKeyBook."""
+        mock_url = MagicMock()  # Mock the URL to avoid dependencies
+        public_key_hash = b"\x00" * 32  # Example public key hash
+        create_key_book = CreateKeyBook(url=mock_url, public_key_hash=public_key_hash)
+
+        self.assertEqual(
+            create_key_book.type(),
+            TransactionType.CREATE_KEY_BOOK,
+            "type should return TransactionType.CREATE_KEY_BOOK"
+        )
+
+    def test_create_key_page_type(self):
+        """Test the type method of CreateKeyPage."""
+        mock_key = MagicMock()  # Mock the KeySpecParams to avoid dependencies
+        create_key_page = CreateKeyPage(keys=[mock_key])
+
+        self.assertEqual(
+            create_key_page.type(),
+            TransactionType.CREATE_KEY_PAGE,
+            "type should return TransactionType.CREATE_KEY_PAGE"
+        )
+
+    def test_create_lite_token_account_type(self):
+        """Test the type method of CreateLiteTokenAccount."""
+        mock_url = MagicMock()  # Mock the URL to avoid dependencies
+        create_lite_token_account = CreateLiteTokenAccount(token_url=mock_url)
+
+        self.assertEqual(
+            create_lite_token_account.type(),
+            TransactionType.CREATE_LITE_TOKEN_ACCOUNT,
+            "type should return TransactionType.CREATE_LITE_TOKEN_ACCOUNT"
+        )
+
+    def test_create_data_account_invalid_url_type(self):
+        """Test CreateDataAccount with an invalid URL type."""
+        with self.assertRaises(TypeError) as context:
+            CreateDataAccount(url="not-a-url")  # Passing a string instead of a URL
+        self.assertEqual(str(context.exception), "url must be an instance of URL.")
+
+
+    def test_create_data_account_invalid_url_missing_parts(self):
+        """Test CreateDataAccount with a URL missing authority or path."""
+        # URL with missing authority
+        mock_url_missing_authority = URL(authority=None, path="/data")
+
+        # URL with missing path
+        mock_url_missing_path = URL(authority="example.com", path=None)
+
+        with self.assertRaises(ValueError) as context:
+            CreateDataAccount(url=mock_url_missing_authority)
+        self.assertIn("Invalid URL", str(context.exception))
+
+        with self.assertRaises(ValueError) as context:
+            CreateDataAccount(url=mock_url_missing_path)
+        self.assertIn("Invalid URL", str(context.exception))
+
+
+    def test_create_data_account_invalid_authority_type(self):
+        """Test CreateDataAccount with an invalid authority type."""
+        mock_url = URL(authority="example.com", path="/data")
+
+        with self.assertRaises(TypeError) as context:
+            CreateDataAccount(url=mock_url, authorities=["not-a-url"])  # Passing a string instead of a URL
+        self.assertEqual(str(context.exception), "All authorities must be instances of URL.")
+
+
+    def test_create_data_account_invalid_authority_url(self):
+        """Test CreateDataAccount with an authority URL missing authority or path."""
+        mock_url = URL(authority="example.com", path="/data")
+
+        # Authority URL with missing authority
+        mock_invalid_authority = URL(authority=None, path="/path")
+
+        with self.assertRaises(ValueError) as context:
+            CreateDataAccount(url=mock_url, authorities=[mock_invalid_authority])
+        self.assertIn("Invalid authority URL", str(context.exception))
+
+    def test_create_data_account_type(self):
+        """Test the type method of CreateDataAccount."""
+        mock_url = URL(authority="example.com", path="/data")
+
+        create_data_account = CreateDataAccount(url=mock_url)
+        self.assertEqual(
+            create_data_account.type(),
+            TransactionType.CREATE_DATA_ACCOUNT,
+            "type should return TransactionType.CREATE_DATA_ACCOUNT"
+        )
+
+    def test_add_recipient_valid(self):
+        """Test add_recipient with a valid URL and amount."""
+        url = URL(authority="example.com", path="/account")
+        amount = 100
+        send_tokens = SendTokens()
+        send_tokens.add_recipient(url, amount)
+
+        self.assertEqual(len(send_tokens.recipients), 1, "Recipient should be added to the list")
+        self.assertEqual(send_tokens.recipients[0].url, url, "Recipient URL should match")
+        self.assertEqual(send_tokens.recipients[0].amount, amount, "Recipient amount should match")
+
+    def test_add_recipient_invalid_amount(self):
+        """Test add_recipient with an invalid amount (less than or equal to zero)."""
+        url = URL(authority="example.com", path="/account")
+        send_tokens = SendTokens()
+
+        with self.assertRaises(ValueError) as context:
+            send_tokens.add_recipient(url, 0)  # Amount is zero
+        self.assertEqual(str(context.exception), "Amount must be greater than zero")
+
+        with self.assertRaises(ValueError) as context:
+            send_tokens.add_recipient(url, -10)  # Amount is negative
+        self.assertEqual(str(context.exception), "Amount must be greater than zero")
+
+    def test_add_recipient_create_token_recipient(self):
+        """Test that add_recipient creates a valid TokenRecipient object."""
+        url = URL(authority="example.com", path="/account")
+        amount = 50
+        send_tokens = SendTokens()
+
+        send_tokens.add_recipient(url, amount)
+        recipient = send_tokens.recipients[0]
+
+        self.assertIsInstance(recipient, TokenRecipient, "Recipient should be an instance of TokenRecipient")
+        self.assertEqual(recipient.url, url, "Recipient URL should match the provided URL")
+        self.assertEqual(recipient.amount, amount, "Recipient amount should match the provided amount")
+
+    def test_transaction_type(self):
+        """Test the type method of SendTokens."""
+        send_tokens = SendTokens()
+        self.assertEqual(
+            send_tokens.type(),
+            TransactionType.SEND_TOKENS,
+            "type should return TransactionType.SEND_TOKENS"
+        )
+
+
+    def test_invalid_url_type(self):
+        """Test CreateIdentity with an invalid URL type."""
+        with self.assertRaises(TypeError) as context:
+            CreateIdentity(url="not-a-url")  # Passing a string instead of a URL
+        self.assertEqual(str(context.exception), "url must be an instance of URL.")
+
+    def test_url_missing_authority(self):
+        """Test CreateIdentity with a URL missing the authority component."""
+        mock_url = URL(authority=None, path="/identity")
+
+        with self.assertRaises(ValueError) as context:
+            CreateIdentity(url=mock_url)
+        self.assertEqual(
+            str(context.exception),
+            f"Invalid URL: Missing authority component in {mock_url}"
+        )
+
+    def test_invalid_authority_type(self):
+        """Test CreateIdentity with an invalid authority type."""
+        mock_url = URL(authority="example.com", path="/identity")
+
+        with self.assertRaises(TypeError) as context:
+            CreateIdentity(url=mock_url, authorities=["not-a-url"])  # Passing a string instead of a URL
+        self.assertEqual(str(context.exception), "All authorities must be instances of URL.")
+
+    def test_invalid_authority_url(self):
+        """Test CreateIdentity with an authority URL missing the authority component."""
+        mock_url = URL(authority="example.com", path="/identity")
+        mock_invalid_authority = URL(authority=None, path="/authority")
+
+        with self.assertRaises(ValueError) as context:
+            CreateIdentity(url=mock_url, authorities=[mock_invalid_authority])
+        self.assertEqual(
+            str(context.exception),
+            f"Invalid authority URL: {mock_invalid_authority}"
+        )
+
+    def test_transaction_type(self):
+        """Test the type method of CreateIdentity."""
+        mock_url = URL(authority="example.com", path="/identity")
+
+        create_identity = CreateIdentity(url=mock_url)
+        self.assertEqual(
+            create_identity.type(),
+            TransactionType.CREATE_IDENTITY,
+            "type should return TransactionType.CREATE_IDENTITY"
+        )
+
+
+
+
 
 
 

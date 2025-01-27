@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\api\context.py
+# accumulate-python-client\accumulate\api\context.py
 
 from typing import Dict, Any
 

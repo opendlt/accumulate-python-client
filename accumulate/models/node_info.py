@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\node_info.py
+# accumulate-python-client\accumulate\models\node_info.py
 
 from dataclasses import dataclass, field
 from typing import List, Optional

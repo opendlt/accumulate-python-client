@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_api\test_exceptions.py
+# accumulate-python-client\tests\test_api\test_exceptions.py
 
 import pytest
 from accumulate.api.exceptions import (

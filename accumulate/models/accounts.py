@@ -1,5 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\accounts.py 
-
+# accumulate-python-client\accumulate\models\accounts.py 
 
 from typing import Optional, List, Tuple, Any
 from decimal import Decimal
@@ -42,7 +41,7 @@ class UnknownAccount(Account):
     def _ensure_url(self, url: Any) -> Any:
         """Ensure the URL is a valid instance or parse it."""
         if isinstance(url, str):
-            from accumulate.utils.url import URL  # Lazy import
+            from accumulate.utils.url import URL
             return URL.parse(url)
         return url
 
@@ -101,13 +100,30 @@ class LiteIdentity(Account):
     def entry_by_key(self, key: bytes) -> Tuple[int, Optional['LiteIdentity'], bool]:
         key_hash = sha256(key).digest()
         lite_key = self._parse_lite_identity(self.url)
-        if lite_key == key_hash[:20]:
+
+        print(f"[DEBUG] Calculated key_hash[:20]: {key_hash[:20].hex()}")
+        print(f"[DEBUG] Derived lite_key: {lite_key.hex()}")
+
+        if lite_key == key_hash[:20]:  # Ensure the comparison logic is correct
+            print(f"[DEBUG] Key match successful.")
             return 0, self, True
+
+        print(f"[DEBUG] Key match failed.")
         return -1, None, False
+
 
     @staticmethod
     def _parse_lite_identity(url: Any) -> bytes:
         return sha256(url.authority.encode()).digest()[:20]
+
+    def __repr__(self):
+        """Custom representation for LiteIdentity."""
+        return (
+            f"<LiteIdentity url={self.url}, "
+            f"credit_balance={self.credit_balance}, "
+            f"last_used_on={self.last_used_on}>"
+        )
+
 
 
 class LiteTokenAccount(Account):
@@ -182,7 +198,7 @@ class DataAccount(FullAccount):
 
     def _ensure_url(self, url: Any) -> Any:
         if isinstance(url, str):
-            from accumulate.utils.url import URL  # Lazy import to avoid circular dependencies
+            from accumulate.utils.url import URL
             return URL.parse(url)
         return url
 
@@ -191,7 +207,6 @@ class DataAccount(FullAccount):
 
     def strip_url(self) -> None:
         self.url = self.url.strip_extras()
-
 
 
 class KeyBook(FullAccount):
@@ -211,8 +226,8 @@ class KeyBook(FullAccount):
     def _ensure_url(self, url: Any) -> Any:
         from accumulate.utils.url import URL
         if isinstance(url, str):
-            print(f"DEBUG: Parsing URL from string in _ensure_url: {url}")
-            return URL.parse(url.strip())
+            print(f"DEBUG: Parsing URL from string in _ensure_url: {url}") #
+            return URL.parse(url.strip()) #
 
         if isinstance(url, URL):
             # Normalize existing URL objects
@@ -245,7 +260,6 @@ class KeyBook(FullAccount):
             print(f"ERROR: Invalid KeyBook URL - Invalid domain in authority: {self.url}")
             raise ValueError(f"Invalid KeyBook URL: {self.url} contains invalid domain in authority.")
 
-
     def get_url(self) -> Any:
         print(f"DEBUG: Retrieving URL in KeyBook: {self.url}")
         return self.url
@@ -267,22 +281,13 @@ class KeyBook(FullAccount):
         
         normalized_path = f"{book_url.path.rstrip('/')}/{index}"
         return URL(authority=book_url.authority, path=normalized_path)
-
-
-
-
-
-
-
-
-
-
+    
 class KeyPage(Account):
     def __init__(self, url: Any, credit_balance: int = 0, accept_threshold: int = 0,
                  reject_threshold: int = 0, response_threshold: int = 0,
                  block_threshold: int = 0, version: int = 0, keys: Optional[List['KeySpec']] = None):
         if url is None:
-            raise ValueError("URL cannot be None.")
+            raise ValueError("URL cannot be None.") #
         if any(threshold < 0 for threshold in [accept_threshold, reject_threshold, response_threshold, block_threshold]):
             raise ValueError("Thresholds cannot be negative.")
         self.url = self._ensure_url(url)
@@ -296,15 +301,15 @@ class KeyPage(Account):
 
     def _ensure_url(self, url: Any) -> Any:
         if isinstance(url, str):
-            from accumulate.utils.url import URL
-            return URL.parse(url)
+            from accumulate.utils.url import URL #
+            return URL.parse(url) #
         return url
 
     def get_url(self) -> Any:
         return self.url
 
     def strip_url(self) -> None:
-        self.url = self.url.strip_extras()
+        self.url = self.url.strip_extras() #
 
     def get_signature_threshold(self) -> int:
         return max(1, self.accept_threshold)
@@ -314,12 +319,13 @@ class KeyPage(Account):
         for i, entry in enumerate(self.keys):
             if entry.public_key_hash == key_hash:  # Use public_key_hash
                 return i, entry, True
-        return -1, None, False
-
+        return -1, None, False #
 
 
 class TokenAccount(FullAccount):
     def __init__(self, url: Any, token_url: Any, balance: Decimal = Decimal(0), account_auth: Optional['AccountAuth'] = None):
+        if url is None or token_url is None:
+            raise ValueError("URL and Token URL cannot be None.")
         super().__init__(account_auth)
         self.url = self._ensure_url(url)
         self.token_url = self._ensure_url(token_url)
@@ -366,9 +372,11 @@ class TokenIssuer(FullAccount):
         self.supply_limit = supply_limit
 
     def _ensure_url(self, url: Any) -> Any:
+        if url is None:
+            raise ValueError("URL cannot be None.")  # Explicitly handle None
         if isinstance(url, str):
             from accumulate.utils.url import URL
-            return URL.parse(url)
+            return URL.parse(url.strip())
         return url
 
     def get_url(self) -> Any:

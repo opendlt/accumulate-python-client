@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_fee_schedule.py
+# accumulate-python-client\tests\test_models\test_fee_schedule.py
 
 import pytest
 from accumulate.models.fee_schedule import Fee, FeeSchedule

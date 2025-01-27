@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_utils\test_address_from.py
+# accumulate-python-client\tests\test_utils\test_address_from.py
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa, ec

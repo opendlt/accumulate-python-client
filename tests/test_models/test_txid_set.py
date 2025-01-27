@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_txid_set.py
+# accumulate-python-client\tests\test_models\test_txid_set.py
 
 import unittest
 from accumulate.models.txid_set import TxIdSet

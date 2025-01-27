@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\auth.py
+# accumulate-python-client\accumulate\models\auth.py
 
 from typing import List, Optional, Tuple
 from accumulate.utils.url import URL

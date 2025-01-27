@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_signing\test_timestamp.py 
+# accumulate-python-client\tests\test_signing\test_timestamp.py 
 
 import pytest
 from accumulate.signing.timestamp import TimestampFromValue, TimestampFromVariable, Timestamp

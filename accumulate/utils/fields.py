@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\utils\fields.py
+# accumulate-python-client\accumulate\utils\fields.py
 
 from datetime import datetime, timedelta
 from typing import Any, Optional, Type, Callable

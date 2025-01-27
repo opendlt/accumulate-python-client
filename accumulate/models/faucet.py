@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\faucet.py
+# accumulate-python-client\accumulate\models\faucet.py
 
 import hashlib
 from datetime import datetime, timezone

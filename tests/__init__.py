@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\__init__.py
+# accumulate-python-client\tests\__init__.py
 
 import os
 import sys

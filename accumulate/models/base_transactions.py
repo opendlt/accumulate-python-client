@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\base_transactions.py
+# accumulate-python-client\accumulate\models\base_transactions.py
 
 from abc import ABC, abstractmethod
 from typing import Any, Optional

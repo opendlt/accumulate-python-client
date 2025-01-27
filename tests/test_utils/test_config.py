@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_utils\test_config.py
+# accumulate-python-client\tests\test_utils\test_config.py
 
 import os
 from unittest.mock import patch

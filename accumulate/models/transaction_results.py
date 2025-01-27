@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\transaction_results.py
+# accumulate-python-client\accumulate\models\transaction_results.py
 
 from typing import Optional, Union, Dict, Any
 from accumulate.utils.url import URL

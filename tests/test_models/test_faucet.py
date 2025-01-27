@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_faucet.py
+# accumulate-python-client\tests\test_models\test_faucet.py
 
 import pytest
 import hashlib

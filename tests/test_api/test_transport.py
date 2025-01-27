@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_api\test_transport.py
+# accumulate-python-client\tests\test_api\test_transport.py
 
 import pytest
 import httpx

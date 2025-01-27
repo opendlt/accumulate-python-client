@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_utils\test_url.py
+# accumulate-python-client\tests\test_utils\test_url.py
 
 import pytest
 from accumulate.utils.url import URL, MissingHostError, WrongSchemeError, URLParseError

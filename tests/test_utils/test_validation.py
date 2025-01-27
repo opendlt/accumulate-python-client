@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_utils\test_validation.py
+# accumulate-python-client\tests\test_utils\test_validation.py
 
 import pytest
 from accumulate.utils.validation import (

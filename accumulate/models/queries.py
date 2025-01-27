@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\queries.py
+# accumulate-python-client\accumulate\models\queries.py
 
 from typing import Optional, Union, Dict
 from accumulate.models.enums import QueryType

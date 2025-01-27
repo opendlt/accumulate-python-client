@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\txid_set.py
+# accumulate-python-client\accumulate\models\txid_set.py
 
 from typing import List
 from accumulate.models.txid import TxID

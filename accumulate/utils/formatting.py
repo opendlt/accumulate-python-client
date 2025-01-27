@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\utils\formatting.py 
+# accumulate-python-client\accumulate\utils\formatting.py 
 
 import hashlib
 import base58

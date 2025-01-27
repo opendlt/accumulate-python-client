@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\responses.py
+# accumulate-python-client\accumulate\models\responses.py
 
 from dataclasses import dataclass
 from typing import List, Optional

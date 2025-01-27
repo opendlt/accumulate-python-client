@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_utils\test_fields.py
+# accumulate-python-client\tests\test_utils\test_fields.py
 
 import pytest
 from datetime import datetime, timedelta

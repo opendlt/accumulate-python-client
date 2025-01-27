@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\key_management.py
+# accumulate-python-client\accumulate\models\key_management.py
 
 from typing import List, Optional, Tuple
 from dataclasses import dataclass, field

@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\api\__init__.py 
+# accumulate-python-client\accumulate\api\__init__.py 
 
 # Imports from client.py
 from .client import AccumulateClient

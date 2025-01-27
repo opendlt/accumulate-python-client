@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\transactions.py
+# accumulate-python-client\accumulate\models\transactions.py
 
 from typing import List, Optional, Union, Any
 from unittest.mock import MagicMock
@@ -9,6 +9,7 @@ from accumulate.utils.url import URL
 from accumulate.models.txid import TxID
 from accumulate.api.exceptions import AccumulateError
 import hashlib
+from accumulate.models.errors import AccumulateError, ErrorCode
 from typing import Optional, List, Union, Tuple
 from accumulate.models.data_entries import DataEntry
 from accumulate.models.enums import TransactionType
@@ -71,20 +72,29 @@ class TransactionStatus:
 
 
     def delivered(self) -> bool:
-        return self.code == AccumulateError.DELIVERED or self.failed()
+        return self.code == ErrorCode.OK.value
 
     def remote(self) -> bool:
-        return self.code == AccumulateError.REMOTE
+        return self.code == ErrorCode.FAILED.value
 
     def pending(self) -> bool:
-        return self.code == AccumulateError.PENDING
+        return self.code == ErrorCode.DID_PANIC.value
 
     def failed(self) -> bool:
-        return not self.code.success()
+        return self.code != ErrorCode.OK.value
 
-    def set(self, error: AccumulateError) -> None:
+    def set(self, error: Optional[AccumulateError]) -> None:
+        """
+        Set the error and update the status code based on the provided error.
+
+        :param error: The error to set.
+        """
         self.error = error
-        self.code = error.code if error.code else AccumulateError.UNKNOWN
+        if error and error.code:
+            self.code = error.code.value
+        else:
+            self.code = ErrorCode.UNKNOWN_ERROR.value
+
 
     def as_error(self) -> Optional[Exception]:
         return self.error if self.error else None
@@ -106,11 +116,6 @@ class TransactionStatus:
             if signer.get_url() == url:
                 return signer
         return None
-
-
-
-
-
 
 class WriteData(TransactionBody):
     def __init__(self, entry: DataEntry, scratch: Optional[bool] = None, write_to_state: Optional[bool] = None):
@@ -134,15 +139,6 @@ class WriteData(TransactionBody):
         except ValueError as e:
             raise ValueError(f"Failed to unmarshal WriteData entry: {e}")
         return self
-
-
-
-
-
-
-
-
-
 
 class WriteDataTo(TransactionBody):
     def __init__(self, recipient: URL, entry: DataEntry):
@@ -172,7 +168,6 @@ class WriteDataTo(TransactionBody):
         self.entry = DataEntry.unmarshal(data[recipient_end:])
         return self
 
-
 class IssueTokens(TransactionBody):
     def __init__(self, to: List["TokenRecipient"]):
         """
@@ -197,7 +192,6 @@ class IssueTokens(TransactionBody):
             offset += 64
         return self
 
-
 class BurnCredits(TransactionBody):
     def __init__(self, amount: int):
         """
@@ -216,7 +210,6 @@ class BurnCredits(TransactionBody):
     def unmarshal(self, data: bytes) -> "BurnCredits":
         self.amount = int.from_bytes(data, "big")
         return self
-
 
 class TransferCredits(TransactionBody):
     def __init__(self, to: List["CreditRecipient"]):
@@ -266,20 +259,6 @@ class TransferCredits(TransactionBody):
 
         return self
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class CreateLiteTokenAccount(TransactionBody):
     def __init__(self, token_url: URL):
         """
@@ -302,9 +281,6 @@ class CreateLiteTokenAccount(TransactionBody):
         token_url = URL.unmarshal(data)
         normalized_url = URL.parse(f"acc://{str(token_url).lstrip('acc://')}")
         return CreateLiteTokenAccount(token_url=normalized_url)
-
-
-
 
 class CreateKeyPage(TransactionBody):
     def __init__(self, keys: List[KeySpecParams]):
@@ -346,8 +322,6 @@ class CreateKeyPage(TransactionBody):
 
         print(f"DEBUG: Completed unmarshaling CreateKeyPage: keys={self.keys}")
         return self
-
-
 
 class CreateKeyBook(TransactionBody):
     def __init__(self, url: URL, public_key_hash: bytes, authorities: Optional[List[URL]] = None):
@@ -402,8 +376,6 @@ class CreateKeyBook(TransactionBody):
         ]
 
         return self
-
-
 
 class CreateDataAccount(TransactionBody):
     def __init__(self, url: URL, authorities: Optional[List[URL]] = None, metadata: Optional[bytes] = None):
@@ -490,21 +462,6 @@ class CreateDataAccount(TransactionBody):
 
         return self
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class SendTokens(TransactionBody):
     def __init__(self, recipients: Optional[List[TokenRecipient]] = None):
         """
@@ -515,7 +472,7 @@ class SendTokens(TransactionBody):
         self.recipients = recipients or []
 
     def add_recipient(self, to: URL, amount: int) -> None:
-        if amount <= 0:
+        if amount <= 0: #
             raise ValueError("Amount must be greater than zero")
         recipient = TokenRecipient(to, amount)
         self.recipients.append(recipient)
@@ -535,7 +492,6 @@ class SendTokens(TransactionBody):
             offset += 64
         return self
 
-
 class CreateIdentity(TransactionBody):
     def __init__(self, url: URL, authorities: Optional[List[URL]] = None):
         """
@@ -544,36 +500,28 @@ class CreateIdentity(TransactionBody):
         :param url: The URL of the identity.
         :param authorities: List of authorities for the identity.
         """
-        print(f"DEBUG: Initializing CreateIdentity with URL: {url}, Authorities: {authorities}")
 
         # Validate URL
         if not isinstance(url, URL):
             raise TypeError("url must be an instance of URL.")
 
         if not url.authority:
-            print(f"ERROR: URL is missing authority. URL: {url}, Authority: {url.authority}")
             raise ValueError(f"Invalid URL: Missing authority component in {url}")
 
         # Validate authorities
         for authority in authorities or []:
             if not isinstance(authority, URL):
-                print(f"ERROR: Invalid authority, not a URL instance: {authority}")
                 raise TypeError("All authorities must be instances of URL.")
             if not authority.authority:
-                print(f"ERROR: Authority URL is missing authority. Authority: {authority}")
                 raise ValueError(f"Invalid authority URL: {authority}")
 
         self.url = url
         self.authorities = authorities or []
-        print(f"DEBUG: CreateIdentity initialized successfully.")
 
     def type(self) -> TransactionType:
         return TransactionType.CREATE_IDENTITY
 
     def marshal(self) -> bytes:
-        print(f"DEBUG: Beginning marshal for CreateIdentity:")
-        print(f"  URL: {self.url}")
-        print(f"  Authorities: {self.authorities}")
 
         # Serialize URL with the scheme
         url_data = marshal_string(f"acc://{self.url}")
@@ -611,14 +559,6 @@ class CreateIdentity(TransactionBody):
         print(f"DEBUG: Parsed Authorities: {self.authorities}")
 
         return self
-
-
-
-
-
-
-
-
 
 class CreateTokenAccount(TransactionBody):
     def __init__(self, url: Optional[URL] = None, token_url: Optional[URL] = None, authorities: Optional[List[URL]] = None):
@@ -694,7 +634,6 @@ class CreateTokenAccount(TransactionBody):
 
         return self
 
-
 class CreateToken(TransactionBody):
     def __init__(self, url: URL, symbol: str, precision: int, authorities: Optional[List[URL]] = None):
         """
@@ -765,12 +704,6 @@ class CreateToken(TransactionBody):
 
         return self
 
-
-
-
-
-
-
 class MintTokens(TransactionBody):
     def __init__(self, token_url: URL, recipients: List["TokenRecipient"]):
         """
@@ -838,20 +771,6 @@ class MintTokens(TransactionBody):
         print(f"DEBUG: Unmarshaled MintTokens: token_url={self.token_url}, recipients={self.recipients}")
         return self
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class BurnTokens(TransactionBody):
     def __init__(self, token_url: URL, amount: int):
         """
@@ -887,7 +806,6 @@ class BurnTokens(TransactionBody):
         # Extract Amount (8 bytes)
         self.amount = int.from_bytes(data[offset:offset + 8], "big")
         return self
-
 
 
 class CreateTokenIssuer(TransactionBody):
@@ -965,8 +883,6 @@ class CreateTokenIssuer(TransactionBody):
         print(f"DEBUG: Parsed Authorities: {self.authorities}")
 
         return self
-
-
 
 
 class UpdateKeyPage(TransactionBody):
@@ -1077,7 +993,6 @@ class UpdateKeyPage(TransactionBody):
             operations.append({"type": operation_type, "value": operation_value})
         return operations
 
-
 class AddCredits(TransactionBody):
     def __init__(self, recipient: Optional[URL] = None, amount: Optional[int] = 0):
         """
@@ -1129,15 +1044,6 @@ class AddCredits(TransactionBody):
         print(f"DEBUG: Parsed Amount: {self.amount}")
 
         return self
-
-
-
-
-
-
-
-
-
 
 class UpdateAccountAuth(TransactionBody):
     def __init__(self, account_url: URL, operations: List[dict]):
@@ -1213,9 +1119,6 @@ class UpdateAccountAuth(TransactionBody):
         return operations
 
 
-
-
-
 class Transaction:
     def __init__(self, header: TransactionHeader, body: Optional[TransactionBody] = None):
         """
@@ -1288,7 +1191,6 @@ class Transaction:
         sha.update(header_hash)
         sha.update(body_hash)
         self.hash = sha.digest()
-
 
 
     def get_body_hash(self) -> Tuple[bytes, bool]:

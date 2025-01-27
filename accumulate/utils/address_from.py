@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\utils\address_from.py
+# accumulate-python-client\accumulate\utils\address_from.py
 
 from typing import Optional
 from cryptography.hazmat.primitives.asymmetric import rsa, ec

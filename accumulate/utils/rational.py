@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\utils\rational.py
+# accumulate-python-client\accumulate\utils\rational.py
 
 import math
 from typing import Union

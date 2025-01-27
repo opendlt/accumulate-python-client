@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\submission.py
+# accumulate-python-client\accumulate\models\submission.py
 
 from dataclasses import dataclass
 from typing import Optional, Dict, Any

@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_txid.py
+# accumulate-python-client\tests\test_models\test_txid.py
 
 import re
 import pytest

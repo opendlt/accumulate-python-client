@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_utils\test_union.py
+# accumulate-python-client\tests\test_utils\test_union.py
 
 import pytest
 import json

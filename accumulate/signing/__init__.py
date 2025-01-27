@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\signing\__init__.py
+# accumulate-python-client\accumulate\signing\__init__.py
 
 from .builder import Builder, InitHashMode
 from .signer import Signer

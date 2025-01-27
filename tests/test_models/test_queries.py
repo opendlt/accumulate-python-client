@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_queries.py
+# accumulate-python-client\tests\test_models\test_queries.py
 
 import unittest
 from accumulate.models.queries import (

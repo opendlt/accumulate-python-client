@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\protocol.py
+# accumulate-python-client\accumulate\models\protocol.py
 
 import hashlib
 from typing import Optional, List, Union

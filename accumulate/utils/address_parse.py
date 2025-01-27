@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\utils\address_parse.py
+# accumulate-python-client\accumulate\utils\address_parse.py
 
 import hashlib
 import base58

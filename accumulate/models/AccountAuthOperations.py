@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\AccountAuthOperations.py
+# accumulate-python-client\accumulate\models\AccountAuthOperations.py
 
 
 from dataclasses import dataclass

@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_utils\test_eip712.pyimport pytest
+# accumulate-python-client\tests\test_utils\test_eip712.pyimport pytest
 
 import pytest
 from eth_utils import keccak

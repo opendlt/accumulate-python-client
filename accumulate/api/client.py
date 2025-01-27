@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\api\client.py 
+# accumulate-python-client\accumulate\api\client.py 
 
 from typing import Any, Dict, List, Optional
 from accumulate.api.transport import RoutedTransport

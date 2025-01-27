@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_auth.py
+# accumulate-python-client\tests\test_models\test_auth.py
 
 import unittest
 from unittest.mock import Mock

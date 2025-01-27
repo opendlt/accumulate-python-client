@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\types.py 
+# accumulate-python-client\accumulate\models\types.py 
 
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any

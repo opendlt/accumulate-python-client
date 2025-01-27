@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_protocol.py
+# accumulate-python-client\tests\test_models\test_protocol.py
 
 import unittest
 from decimal import Decimal

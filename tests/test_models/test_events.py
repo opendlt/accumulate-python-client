@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_events.py
+# accumulate-python-client\tests\test_models\test_events.py
 
 import pytest
 from datetime import datetime, timezone

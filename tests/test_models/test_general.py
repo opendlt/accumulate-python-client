@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_general.py
+# accumulate-python-client\tests\test_models\test_general.py
 
 import logging
 import unittest

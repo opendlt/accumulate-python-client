@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_types.py
+# accumulate-python-client\tests\test_models\test_types.py
 
 import pytest
 import json

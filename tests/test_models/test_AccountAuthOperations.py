@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_AccountAuthOperations.py
+# accumulate-python-client\tests\test_models\test_AccountAuthOperations.py
 
 import pytest
 from accumulate.models.AccountAuthOperations import (

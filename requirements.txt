@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\requirements.txt
+# accumulate-python-client\requirements.txt
 
 # Cryptography Libraries
 ecdsa==0.18.0  # ECDSA and Bitcoin-like signatures

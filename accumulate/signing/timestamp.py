@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\signing\timestamp.py 
+# accumulate-python-client\accumulate\signing\timestamp.py 
 
 from abc import ABC, abstractmethod
 import threading

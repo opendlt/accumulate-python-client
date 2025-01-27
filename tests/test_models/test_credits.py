@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\tests\test_models\test_credits.py
+# accumulate-python-client\tests\test_models\test_credits.py
 
 import pytest
 from accumulate.models.credits import CreditsAccount

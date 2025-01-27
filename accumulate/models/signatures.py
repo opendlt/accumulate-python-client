@@ -1,10 +1,10 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\signatures.py 
+# accumulate-python-client\accumulate\models\signatures.py 
 
 import hashlib
 from typing import List, Dict, Any, Optional, Tuple
 from eth_keys import keys
 from eth_utils import decode_hex, keccak
-from ecdsa import VerifyingKey, SECP256k1
+from ecdsa import VerifyingKey, SECP256k1, SigningKey
 from Crypto.PublicKey import RSA
 from Crypto.Signature import pkcs1_15
 from Crypto.Hash import SHA256
@@ -76,22 +76,22 @@ class SignerManager:
 
     def find_signers(self, authority: URL) -> List[Signer]:
         """Find all signers under a given authority."""
-        return [s for s in self.signers if authority.parent_of(s.get_url())]
+        return [s for s in self.signers if is_parent_of(authority, s.get_url())]
+
 
     def get_signer(self, url: URL) -> Optional[Signer]:
         """Retrieve a signer by URL."""
         for signer in self.signers:
             if signer.get_url() == url:
                 return signer
-        return None
+        return None #
 
 
 # ========== Authority and Parent-Child Relationships ==========
 
 def is_parent_of(parent: URL, child: URL) -> bool:
     """Check if a URL is a parent of another URL."""
-    return child.to_string().startswith(parent.to_string())
-
+    return str(child).startswith(str(parent))
 
 # ========== ED25519 Signature ==========
 
@@ -129,9 +129,17 @@ class EIP712Signature(Signature):
     def verify(self, data: Dict[str, Any]) -> bool:
         try:
             message_hash = self.hash(data)
+            print(f"Debug: Verifying message_hash={message_hash.hex()}, signature={self.signature.hex()}")
+            
             eth_key = keys.PublicKey(self.public_key)
-            return eth_key.verify_msg_hash(message_hash, keys.Signature(self.signature))
-        except Exception:
+            print(f"Debug: Using public_key={self.public_key.hex()}")
+
+            # Perform verification
+            result = eth_key.verify_msg_hash(message_hash, keys.Signature(self.signature))
+            print(f"Debug: Verification result={result}")
+            return result
+        except Exception as e:
+            print(f"Error during verification: {e}")
             return False
 
     @staticmethod
@@ -168,20 +176,26 @@ class SignatureFactory:
     @staticmethod
     def create_signature(sig_type: str, **kwargs) -> Optional[Signature]:
         if sig_type == "LegacyED25519":
-            return LegacyED25519Signature(**kwargs)
+            # Pass only the required arguments
+            required_args = {k: kwargs[k] for k in ["signer", "public_key", "signature", "timestamp"] if k in kwargs}
+            return LegacyED25519Signature(**required_args)
         elif sig_type == "TypedData":
-            return TypedDataSignature(**kwargs)
+            required_args = {k: kwargs[k] for k in ["signer", "public_key", "signature", "chain_id", "memo", "data"] if k in kwargs}
+            return TypedDataSignature(**required_args)
         elif sig_type == "RCD1":
-            return RCD1Signature(**kwargs)
+            required_args = {k: kwargs[k] for k in ["signer", "public_key", "signature", "timestamp"] if k in kwargs}
+            return RCD1Signature(**required_args)
         elif sig_type == "BTC":
-            return BTCSignature(**kwargs)
+            required_args = {k: kwargs[k] for k in ["signer", "public_key", "signature"] if k in kwargs}
+            return BTCSignature(**required_args)
         elif sig_type == "DelegatedSignature":
-            return DelegatedSignature(**kwargs)
+            required_args = {k: kwargs[k] for k in ["signature", "delegator"] if k in kwargs}
+            return DelegatedSignature(**required_args)
         elif sig_type == "AuthoritySignature":
-            return AuthoritySignature(**kwargs)
+            required_args = {k: kwargs[k] for k in ["origin", "authority", "vote", "txid"] if k in kwargs}
+            return AuthoritySignature(**required_args)
         else:
             raise ValueError(f"Unsupported signature type: {sig_type}")
-        
 
 # ========== Individual Signature Types ==========
 
@@ -196,7 +210,7 @@ class LegacyED25519Signature(Signature):
         return do_sha256(self.public_key, str(self.timestamp).encode())
 
     def verify(self, msg: bytes) -> bool:
-        try:
+        try: #
             vk = VerifyingKey.from_string(self.public_key, curve=SECP256k1)
             return vk.verify(self.signature, msg)
         except Exception:
@@ -215,7 +229,7 @@ class BTCSignature(Signature):
     def verify(self, msg: bytes) -> bool:
         try:
             vk = VerifyingKey.from_string(self.public_key, curve=SECP256k1)
-            return vk.verify(self.signature, msg)
+            return vk.verify(self.signature, msg) #
         except Exception:
             return False
 
@@ -243,7 +257,7 @@ class TypedDataSignature(Signature):
         return hashlib.sha256(encoded_data).digest()
 
     def verify(self, data: Dict[str, Any]) -> bool:
-        try:
+        try: #
             message_hash = self.hash(data)
             eth_key = keys.PublicKey(self.public_key)
             return eth_key.verify_msg_hash(message_hash, keys.Signature(self.signature))
@@ -340,7 +354,7 @@ def do_btc_hash(pub_key: bytes) -> bytes:
     sha256_hash = hashlib.sha256(pub_key).digest()
     ripemd160 = hashlib.new('ripemd160')
     ripemd160.update(sha256_hash)
-    return ripemd160.digest()
+    return ripemd160.digest() 
 
 
 # ========== EthSignatures ==========
@@ -359,11 +373,17 @@ class ETHSignature(Signature):
     def verify(self, message: bytes) -> bool:
         """Verify the Ethereum signature."""
         try:
-            message_hash = hashlib.sha256(message).digest()
+            # Hash the message using Ethereum's EIP-191 specification
+            message_hash = keccak(b"\x19Ethereum Signed Message:\n" + str(len(message)).encode() + message)
             eth_key = keys.PublicKey(self.public_key)
-            sig_obj = keys.Signature(self.signature[:64])  # Use only R and S components
+
+            # Create a Signature object
+            sig_obj = keys.Signature(self.signature[:64] + bytes([self.signature[64] % 2]))  # Ensure v is 0 or 1
+
+            # Verify the signature
             return eth_key.verify_msg_hash(message_hash, sig_obj)
         except Exception as e:
+            print(f"Error during ETH signature verification: {e}")
             return False
 
     def get_signature(self) -> bytes:
@@ -398,7 +418,8 @@ class ECDSA_SHA256Signature(Signature):
         """
         try:
             verifying_key = VerifyingKey.from_string(self.public_key, curve=SECP256k1)
-            return verifying_key.verify(self.signature, msg, hashfunc=SHA256.new().digest)
+            # Use hashlib.sha256 directly as the hash function
+            return verifying_key.verify(self.signature, msg, hashfunc=hashlib.sha256)
         except Exception as e:
             print(f"Verification failed: {e}")
             return False
@@ -409,13 +430,12 @@ class ECDSA_SHA256Signature(Signature):
         """
         try:
             signing_key = SigningKey.from_string(private_key, curve=SECP256k1)
-            signature = signing_key.sign(msg, hashfunc=SHA256.new().digest)
+            signature = signing_key.sign(msg, hashfunc=hashlib.sha256)
             self.signature = signature
             return signature
         except Exception as e:
             print(f"Signing failed: {e}")
             raise
-
 
 # ========== Key definitions ==========
 

@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\errors.py
+# accumulate-python-client\accumulate\models\errors.py
 
 from enum import Enum
 from typing import Optional
@@ -18,6 +18,12 @@ class ErrorCode(Enum):
         self._value_ = value
         self.description = description
 
+    def success(self) -> bool:
+        """
+        Determines if the error code represents a successful state.
+        """
+        return self == ErrorCode.OK
+
     @classmethod
     def from_value(cls, value: int) -> "ErrorCode":
         """
@@ -31,7 +37,6 @@ class ErrorCode(Enum):
             if error.value == value:
                 return error
         raise ValueError(f"Unknown ErrorCode value: {value}")
-
 
 class AccumulateError(Exception):
     """

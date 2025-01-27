@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\api\transport.py
+# accumulate-python-client\accumulate\api\transport.py
 
 import httpx
 from typing import Any, Dict

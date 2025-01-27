@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\events.py
+# accumulate-python-client\accumulate\models\events.py
 
 from typing import List, Optional, Dict, Any
 from datetime import datetime

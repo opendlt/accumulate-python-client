@@ -1,4 +1,4 @@
-# C:\Accumulate_Stuff\accumulate-python-client\accumulate\models\address.py
+# accumulate-python-client\accumulate\models\address.py
 
 import base64
 import binascii
