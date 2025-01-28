@@ -339,13 +339,19 @@ def unmarshal_string(data: bytes) -> str:
     :param data: The marshaled byte array.
     :return: The original string.
     """
+    if len(data) < 4:  # Minimum for a valid length prefix
+        raise EncodingError("Not enough data to decode length prefix for string.")
+
     length = unmarshal_uint(data)  # Decode the length prefix
     start_index = len(marshal_uint(length))  # Skip the length prefix
     end_index = start_index + length
-    if len(data) < end_index:
-        raise EncodingError(f"Not enough data to unmarshal string: Expected {end_index}, got {len(data)}") #
+
+    if len(data) < end_index:  # Validate total length
+        raise EncodingError(f"Not enough data to unmarshal string: Expected {end_index}, got {len(data)}")
+
     result = data[start_index:end_index].decode("utf-8")
     return result.strip('"')  # Remove any unexpected quotes
+
 
 
 

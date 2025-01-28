@@ -41,18 +41,19 @@ class DataEntry:
         Serialize the DataEntry to bytes.
         """
         # Serialize the type as the first byte
-        type_byte = self.type().to_bytes(1, "big")
+        type_byte = self.type().value.to_bytes(1, "big")  # Use `.value`
         # Serialize the number of chunks
         chunk_count = len(self.data).to_bytes(2, "big")
         # Serialize each data chunk (length-prefixed)
         serialized_chunks = b"".join(len(chunk).to_bytes(4, "big") + chunk for chunk in self.data)
         return type_byte + chunk_count + serialized_chunks
 
+
     @classmethod
     def unmarshal(cls, data: bytes) -> "DataEntry":
         print(f"DEBUG: Starting unmarshal with data: {data}")
         if len(data) < 3:
-            raise ValueError("Data too short to unmarshal: must include type and chunk count.")
+            raise ValueError("Data too short to unmarshal: must include type and chunk count.")  #
 
         type_byte = data[0]
         print(f"DEBUG: Parsed type_byte: {type_byte}")
@@ -69,7 +70,7 @@ class DataEntry:
             offset += 4
             
             if offset + chunk_length > len(data):
-                raise ValueError(f"Data too short to read chunk at offset {offset}, expected length {chunk_length}.")
+                raise ValueError(f"Data too short to read chunk at offset {offset}, expected length {chunk_length}.") #
             
             chunk = data[offset:offset + chunk_length]
             offset += chunk_length
@@ -80,7 +81,7 @@ class DataEntry:
         if type_byte == DataEntryType.ACCUMULATE.value:
             return AccumulateDataEntry(chunks)
         elif type_byte == DataEntryType.DOUBLE_HASH.value:
-            return DoubleHashDataEntry(chunks)
+            return DoubleHashDataEntry(chunks)  #
         else:
             raise ValueError(f"Unknown DataEntry type: {type_byte}")
 
@@ -104,12 +105,13 @@ class AccumulateDataEntry(DataEntry):
         Serialize the DataEntry to bytes.
         """
         # Serialize the type as the first byte
-        type_byte = self.type().value.to_bytes(1, "big")  # Use `.value` for enum
+        type_byte = self.type().value.to_bytes(1, "big")  # Ensure `.value` is used for the Enum
         # Serialize the number of chunks
         chunk_count = len(self.data).to_bytes(2, "big")
         # Serialize each data chunk (length-prefixed)
         serialized_chunks = b"".join(len(chunk).to_bytes(4, "big") + chunk for chunk in self.data)
         return type_byte + chunk_count + serialized_chunks
+
 
 
 

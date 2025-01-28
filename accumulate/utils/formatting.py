@@ -48,7 +48,7 @@ def format_eth(hash_bytes: bytes) -> str:
     """Formats an Ethereum address."""
     # Ensure the hash is exactly 20 bytes long by truncating or padding with zeros
     if len(hash_bytes) > 20:
-        hash_bytes = hash_bytes[-20:]  # Take the last 20 bytes
+        hash_bytes = hash_bytes[-20:]  # Take the last 20 bytes #
     elif len(hash_bytes) < 20:
         hash_bytes = hash_bytes.rjust(20, b'\x00')  # Pad with leading zeros
 
@@ -100,7 +100,7 @@ def _hash_with_algorithm(data: bytes, algorithm: str) -> bytes:
 def _format_with_prefix(hash_bytes: bytes, prefix: str) -> str:
     """Formats the address with a prefix and checksum."""
     if not hash_bytes:
-        raise ValueError("Hash bytes cannot be empty")
+        raise ValueError("Hash bytes cannot be empty") #
 
     address = prefix.encode() + hash_bytes
     checksum = _calculate_checksum(address)
@@ -110,7 +110,7 @@ def _format_with_prefix(hash_bytes: bytes, prefix: str) -> str:
 def _format_with_checksum(hash_bytes: bytes, prefix: bytes) -> str:
     """Formats the address with a checksum."""
     if not hash_bytes:
-        raise ValueError("Hash bytes cannot be empty")
+        raise ValueError("Hash bytes cannot be empty") #
 
     address = prefix + hash_bytes
     checksum = _calculate_checksum(address)
@@ -134,7 +134,7 @@ def format_amount(amount: int, precision: int) -> str:
     ipart, fpart = amount_str[:-precision], amount_str[-precision:]
 
     if not ipart:
-        ipart = "0"
+        ipart = "0" #
 
     return f"{ipart}.{fpart}" if fpart else ipart
 
@@ -150,7 +150,7 @@ def format_big_amount(amount: Union[int, Decimal], precision: int) -> str:
     ipart, fpart = amount_str[:-precision], amount_str[-precision:]
 
     if not ipart:
-        ipart = "0"
+        ipart = "0" #
 
     return f"{ipart}.{fpart}" if fpart else ipart
 
@@ -165,24 +165,32 @@ def format_key_page_url(key_book_url: str, page_index: int) -> str:
     return f"{key_book_url}/{page_index+1}"
 
 def parse_key_page_url(key_page_url: str) -> tuple:
-    parts = key_page_url.rsplit("/", 1)
-    if len(parts) != 2:
-        raise ValueError("Invalid key page URL")
-    key_book_url, page_number = parts
+    print(f"DEBUG: Input key_page_url: {key_page_url}")
+    
+    # Ensure the URL starts with the correct prefix
+    if not key_page_url.startswith("acc://"):
+        raise ValueError("Invalid key page URL: must start with 'acc://'")
+
+    # Remove the prefix for further processing
+    path = key_page_url[len("acc://"):]
+    print(f"DEBUG: Path after removing prefix: {path}")
+
+    # Split the path into components
+    parts = path.split("/")
+    print(f"DEBUG: Split path components: {parts}")
+
+    # Validate the structure
+    if len(parts) != 3:
+        raise ValueError("Invalid key page URL: must include ADI, key book, and page number")
+
+    adi, key_book, page_number = parts
+
+    print(f"DEBUG: ADI: {adi}, Key Book: {key_book}, Page Number: {page_number}")
+
+    # Ensure the page number is a valid integer
+    if not page_number.isdigit():
+        raise ValueError(f"Invalid key page URL: page number '{page_number}' is not a valid integer")
+
+    # Reconstruct the key book URL
+    key_book_url = f"acc://{adi}/{key_book}"
     return key_book_url, int(page_number) - 1
-
-
-# Example Usage
-if __name__ == "__main__":
-    # Example hash bytes for testing
-    example_hash = bytes.fromhex("abcdef" * 5)
-
-    print("AC1:", format_ac1(example_hash))
-    print("AS1:", format_as1(example_hash))
-    print("AC2:", format_ac2(example_hash))
-    print("BTC:", format_btc(example_hash))
-    print("ETH:", format_eth(example_hash))
-
-    # Test Amount Formatting
-    print("Amount (int):", format_amount(12345678, 4))
-    print("Big Amount (Decimal):", format_big_amount(Decimal("987654321"), 5))

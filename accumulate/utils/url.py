@@ -179,7 +179,12 @@ class URL:
         return self._str_cache
 
 
-
+    def is_key_page_url(self) -> bool:
+        """Check if the URL represents a valid key page."""
+        path_parts = self.path.strip("/").split("/")
+        if len(path_parts) == 3 and path_parts[-1].isdigit():
+            return True
+        return False
 
 
     def __eq__(self, other: Any) -> bool:

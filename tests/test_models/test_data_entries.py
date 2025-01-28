@@ -126,3 +126,87 @@ def test_unmarshal_invalid_data():
     with pytest.raises(ValueError, match="Unknown DataEntry type: 5"):
         DataEntry.unmarshal(invalid_data)
 
+
+
+
+
+
+
+
+
+
+
+
+def test_data_entry_marshal():
+    """Test DataEntry marshal method."""
+    data = [b"chunk1", b"chunk2"]
+    entry = AccumulateDataEntry(data)
+
+    # Marshal the entry
+    marshaled_data = entry.marshal()
+
+    # Expected marshaled result
+    type_byte = DataEntryType.ACCUMULATE.value.to_bytes(1, "big")  # Use `.value` to get the integer representation
+    chunk_count = len(data).to_bytes(2, "big")
+    serialized_chunks = (
+        len(data[0]).to_bytes(4, "big") + data[0] +
+        len(data[1]).to_bytes(4, "big") + data[1]
+    )
+    expected_marshal = type_byte + chunk_count + serialized_chunks
+
+    # Assert the marshaled data is as expected
+    assert marshaled_data == expected_marshal, "Marshaled data does not match expected result."
+
+
+
+def test_unmarshal_data_too_short():
+    """Test unmarshal raises ValueError for short data."""
+    invalid_data = b"\x01\x00"  # Too short for type and chunk count
+    with pytest.raises(ValueError, match="Data too short to unmarshal: must include type and chunk count."):
+        DataEntry.unmarshal(invalid_data)
+
+
+def test_unmarshal_chunk_length_exceeds_data():
+    """Test unmarshal raises ValueError when chunk length exceeds data size."""
+    invalid_data = (
+        DataEntryType.DOUBLE_HASH.value.to_bytes(1, "big") +  # Use `.value` to get the integer representation
+        (1).to_bytes(2, "big") +  # One chunk
+        (10).to_bytes(4, "big") +  # Chunk length of 10
+        b"short"  # Actual chunk is shorter than declared length
+    )
+    with pytest.raises(ValueError, match="Data too short to read chunk at offset 7, expected length 10."):
+        DataEntry.unmarshal(invalid_data)
+
+def test_unmarshal_double_hash_entry():
+    """Test unmarshal correctly returns a DoubleHashDataEntry."""
+    data = [b"chunk1", b"chunk2"]
+    marshaled_data = (
+        DataEntryType.DOUBLE_HASH.value.to_bytes(1, "big") +  # Use `.value`
+        len(data).to_bytes(2, "big") +
+        b"".join(len(chunk).to_bytes(4, "big") + chunk for chunk in data)
+    )
+
+    # Unmarshal the data
+    entry = DataEntry.unmarshal(marshaled_data)
+
+    # Assert the entry is of the correct type
+    assert isinstance(entry, DoubleHashDataEntry), "Unmarshaled entry is not a DoubleHashDataEntry."
+
+    # Assert the data is correctly parsed
+    assert entry.get_data() == data, "Unmarshaled data does not match the original data."
+
+
+def test_marshal_and_unmarshal_are_inverses():
+    """Test that marshal and unmarshal are inverses of each other."""
+    data = [b"chunk1", b"chunk2"]
+    original_entry = AccumulateDataEntry(data)
+
+    # Marshal the entry
+    marshaled_data = original_entry.marshal()
+
+    # Unmarshal the marshaled data
+    unmarshaled_entry = DataEntry.unmarshal(marshaled_data)
+
+    # Assert the unmarshaled data matches the original
+    assert isinstance(unmarshaled_entry, AccumulateDataEntry), "Unmarshaled entry is not of the correct type."
+    assert unmarshaled_entry.get_data() == original_entry.get_data(), "Unmarshaled data does not match the original."

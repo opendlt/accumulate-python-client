@@ -650,7 +650,7 @@ class CreateToken(TransactionBody):
         self.authorities = authorities or []
 
     def type(self) -> TransactionType:
-        return TransactionType.CREATE_TOKEN
+        return TransactionType.CREATE_TOKEN #
 
     def marshal(self) -> bytes:
         """
@@ -705,18 +705,21 @@ class CreateToken(TransactionBody):
         return self
 
 class MintTokens(TransactionBody):
-    def __init__(self, token_url: URL, recipients: List["TokenRecipient"]):
+    def __init__(self, token_url: Optional[URL] = None, recipients: Optional[List["TokenRecipient"]] = None):
         """
         Represents a Mint Tokens transaction.
 
         :param token_url: The URL of the token issuer account.
         :param recipients: List of recipients and the amounts to mint for each.
         """
-        self.token_url = token_url
-        self.recipients = recipients
+        # Skip validation for placeholders (e.g., during unmarshaling)
+        if token_url and not token_url.authority:
+            raise ValueError("Token URL authority cannot be empty.")
+        self.token_url = token_url or URL(authority="", path="")
+        self.recipients = recipients or []
 
     def type(self) -> TransactionType:
-        return TransactionType.MINT_TOKENS
+        return TransactionType.ISSUE_TOKENS
 
     def marshal(self) -> bytes:
         print(f"DEBUG: Marshaling MintTokens:")
@@ -741,35 +744,59 @@ class MintTokens(TransactionBody):
         print(f"DEBUG: Unmarshaling MintTokens:")
         print(f"  Input data: {data.hex()}")
 
-        # Parse and normalize token_url
-        token_url_str, remaining_data = unmarshal_string(data), data[len(marshal_string(unmarshal_string(data))):]
-        self.token_url = URL.parse(f"acc://{token_url_str.lstrip('acc://')}")
-        print(f"DEBUG: Parsed Token URL: {self.token_url}")
+        try:
+            # Step 1: Parse and normalize the token_url
+            token_url_str = unmarshal_string(data)
+            token_url_length = len(marshal_string(token_url_str))  # Correctly calculate consumed length
+            remaining_data = data[token_url_length:]
+            print(f"DEBUG: Token URL String: {token_url_str}")
+            self.token_url = URL.parse(f"acc://{token_url_str.lstrip('acc://')}")
+            print(f"DEBUG: Parsed Token URL: {self.token_url}")
 
-        # Parse recipients length
-        recipients_length, remaining_data = unmarshal_uint(remaining_data), remaining_data[len(marshal_uint(unmarshal_uint(remaining_data))):]
-        print(f"DEBUG: Recipients length: {recipients_length}")
+            # Step 2: Parse the recipients length
+            recipients_length = unmarshal_uint(remaining_data)
+            length_field_size = len(marshal_uint(recipients_length))  # Calculate size of length prefix
+            remaining_data = remaining_data[length_field_size:]
+            print(f"DEBUG: Recipients Length: {recipients_length}")
+            print(f"DEBUG: Remaining Data After Length: {remaining_data.hex()}")
 
-        # Validate recipients length
-        if recipients_length > len(remaining_data):
-            raise ValueError(f"Invalid recipients_length: {recipients_length} exceeds available data size.")
+            # Step 3: Validate recipients length
+            if recipients_length > len(remaining_data):
+                error_message = (f"Invalid recipients_length: {recipients_length} exceeds "
+                                f"available data size: {len(remaining_data)}") #
+                print(f"ERROR: {error_message}") #
+                raise ValueError(error_message) #
 
-        # Parse recipients
-        recipients_data = remaining_data[:recipients_length]
-        self.recipients = []
-        offset = 0
-        while offset < len(recipients_data):
-            recipient = TokenRecipient.unmarshal(recipients_data[offset:])
-            recipient.url = URL.parse(f"acc://{str(recipient.url).lstrip('acc://')}")
-            self.recipients.append(recipient)
+            # Step 4: Parse recipients data
+            recipients_data = remaining_data[:recipients_length]
+            print(f"DEBUG: Recipients Data: {recipients_data.hex()}")
+            self.recipients = []
+            offset = 0
 
-            # Calculate the size of the current recipient
-            url_length = int.from_bytes(recipients_data[offset:offset + 2], "big")
-            offset += 2 + url_length + 32  # URL length prefix, URL, and amount
-        print(f"DEBUG: Parsed Recipients: {self.recipients}")
+            while offset < len(recipients_data):
+                # Parse each recipient
+                recipient = TokenRecipient.unmarshal(recipients_data[offset:])
+                print(f"DEBUG: Parsed Recipient: {recipient}")
+
+                # Normalize the recipient URL
+                recipient.url = URL.parse(f"acc://{str(recipient.url).lstrip('acc://')}")
+                self.recipients.append(recipient)
+
+                # Calculate size of the current recipient
+                url_length = int.from_bytes(recipients_data[offset:offset + 2], "big")
+                offset += 2 + url_length + 32  # URL length prefix + URL + amount
+                print(f"DEBUG: Offset after processing recipient: {offset}")
+
+            print(f"DEBUG: Final Recipients: {self.recipients}")
+        except Exception as e: #
+            print(f"ERROR: Unmarshal failed with exception: {e}") #
+            raise #
 
         print(f"DEBUG: Unmarshaled MintTokens: token_url={self.token_url}, recipients={self.recipients}")
         return self
+
+
+
 
 class BurnTokens(TransactionBody):
     def __init__(self, token_url: URL, amount: int):
@@ -820,27 +847,25 @@ class CreateTokenIssuer(TransactionBody):
 
         # Validate URL
         if not isinstance(url, URL):
-            raise TypeError("url must be an instance of URL.")
+            raise TypeError("url must be an instance of URL.") #
 
         if not url.authority:
-            print(f"ERROR: URL is missing authority. URL: {url}, Authority: {url.authority}")
-            raise ValueError(f"Invalid URL: Missing authority component in {url}")
+            print(f"ERROR: URL is missing authority. URL: {url}, Authority: {url.authority}") #
+            raise ValueError(f"Invalid URL: Missing authority component in {url}") #
 
         # Validate authorities
         for authority in authorities or []:
             if not isinstance(authority, URL):
-                print(f"ERROR: Invalid authority, not a URL instance: {authority}")
-                raise TypeError("All authorities must be instances of URL.")
+                raise TypeError("All authorities must be instances of URL.") #
             if not authority.authority:
-                print(f"ERROR: Authority URL is missing authority. Authority: {authority}")
-                raise ValueError(f"Invalid authority URL: {authority}")
+                raise ValueError(f"Invalid authority URL: {authority}") #
 
         self.url = url
         self.authorities = authorities or []
         print(f"DEBUG: CreateTokenIssuer initialized successfully.")
 
     def type(self) -> TransactionType:
-        return TransactionType.CREATE_TOKEN_ISSUER
+        return TransactionType.CREATE_TOKEN #
 
     def marshal(self) -> bytes:
         print(f"DEBUG: Beginning marshal for CreateTokenIssuer:")
@@ -956,41 +981,6 @@ class UpdateKeyPage(TransactionBody):
 
             operations.append({"type": operation_type, "value": operation_value})
 
-        return operations
-
-
-    def _marshal_operation(self, operation: dict) -> bytes:
-        """
-        Serialize a single operation.
-
-        :param operation: Operation dictionary containing `type` and `value`.
-        :return: Serialized bytes for the operation.
-        """
-        operation_type = operation.get("type", "").encode("utf-8")
-        operation_value = operation.get("value", b"")
-        return len(operation_type).to_bytes(2, "big") + operation_type + len(operation_value).to_bytes(2, "big") + operation_value
-
-    def _unmarshal_operations(self, data: bytes) -> List[dict]:
-        """
-        Deserialize operations from bytes.
-
-        :param data: Serialized operations data.
-        :return: List of deserialized operations.
-        """
-        operations = []
-        offset = 0
-        while offset < len(data):
-            type_length = int.from_bytes(data[offset:offset + 2], "big")
-            offset += 2
-            operation_type = data[offset:offset + type_length].decode("utf-8")
-            offset += type_length
-
-            value_length = int.from_bytes(data[offset:offset + 2], "big")
-            offset += 2
-            operation_value = data[offset:offset + value_length]
-            offset += value_length
-
-            operations.append({"type": operation_type, "value": operation_value})
         return operations
 
 class AddCredits(TransactionBody):
@@ -1154,10 +1144,9 @@ class Transaction:
         """
         Get the transaction ID.
         """
-        return TxID(
-            authority=self.header.principal if self.header.principal else "unknown",
-            tx_hash=self.calculate_hash()
-        )
+        # Use the principal URL or a default "acc://unknown" URL
+        url = URL.parse(self.header.principal) if self.header.principal else URL(authority="unknown", path="")
+        return TxID(url=url, tx_hash=self.calculate_hash())
 
     def get_hash(self) -> bytes:
         """
@@ -1202,9 +1191,9 @@ class Transaction:
         if not self.body:
             return b"", False
 
-        data = self.body.marshal()
-        hash_ = hashlib.sha256(data).digest()
-        return hash_, len(data) == 64
+        data = self.body.marshal() #
+        hash_ = hashlib.sha256(data).digest() #
+        return hash_, len(data) == 64 #
 
 
     def marshal(self) -> bytes:
@@ -1215,7 +1204,7 @@ class Transaction:
         """
         header_data = self.header.marshal_binary()
         body_data = self.body.marshal() if self.body else b""
-        return len(header_data).to_bytes(2, "big") + header_data + len(body_data).to_bytes(2, "big") + body_data
+        return len(header_data).to_bytes(2, "big") + header_data + len(body_data).to_bytes(2, "big") + body_data #
 
     def unmarshal(self, data: bytes) -> "Transaction":
         """
@@ -1243,7 +1232,7 @@ def hash_write_data(without_entry: "TransactionBody", entry: DataEntry) -> bytes
 
     if entry is None:
         hasher.update(b"\x00" * 32)
-    else:
+    else: #
         hasher.update(entry.get_hash())
 
     return hasher.digest()

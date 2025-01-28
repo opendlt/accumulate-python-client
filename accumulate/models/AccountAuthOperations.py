@@ -85,10 +85,3 @@ class RemoveAccountAuthorityOperation(AccountAuthOperation):
     def type(self) -> AccountAuthOperationType:
         return AccountAuthOperationType.REMOVE_AUTHORITY
 
-
-
-# Example Usage
-if __name__ == "__main__":
-    enable_op = EnableAccountAuthOperation(authority=URL("https://example.com/authority"))
-    print("Operation Type:", enable_op.type())
-    print("Operation Hash:", enable_op.hash())

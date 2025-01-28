@@ -137,3 +137,60 @@ def test_from_private_key_bytes_rsa(rsa_private_key):
 def test_from_private_key_bytes_invalid_type():
     with pytest.raises(ValueError, match="Unsupported signature type: INVALID_TYPE"):
         from_private_key_bytes(b"\x01" * 32, "INVALID_TYPE")
+
+
+
+
+
+def test_from_ed25519_private_key_valid_32_bytes():
+    """Test Ed25519 private key conversion with 32-byte key."""
+    valid_32_byte_key = b"\x01" * 32  # A valid 32-byte private key
+    result = from_ed25519_private_key(valid_32_byte_key)
+    assert isinstance(result, PrivateKey)
+    assert result.type == SignatureType.ED25519
+    assert result.key == valid_32_byte_key
+
+    # Check the derived public key
+    private_key = Ed25519PrivateKey.from_private_bytes(valid_32_byte_key)
+    expected_public_key = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.Raw,
+        format=serialization.PublicFormat.Raw
+    )
+    assert result.public_key.key == expected_public_key
+
+
+def test_from_private_key_bytes_invalid_rsa_key():
+    """Test RSA private key validation raises an error for invalid key."""
+    invalid_key = b"invalid_rsa_key"
+    with pytest.raises(ValueError, match="Could not deserialize key data."):
+        from_private_key_bytes(invalid_key, SignatureType.RSA_SHA256)
+
+
+def test_from_private_key_bytes_invalid_ecdsa_key():
+    """Test ECDSA private key validation raises an error for invalid key."""
+    invalid_key = b"invalid_ecdsa_key"
+    with pytest.raises(ValueError, match="Could not deserialize key data."):
+        from_private_key_bytes(invalid_key, SignatureType.ECDSA_SHA256)
+
+def test_from_private_key_bytes_valid_ecdsa_key(ecdsa_private_key):
+    """Test valid ECDSA private key conversion."""
+    private_key_bytes = ecdsa_private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption(),
+    )
+    result = from_private_key_bytes(private_key_bytes, SignatureType.ECDSA_SHA256)
+    assert isinstance(result, PrivateKey)
+    assert result.type == SignatureType.ECDSA_SHA256
+    assert b"-----BEGIN PRIVATE KEY-----" in result.key
+    assert b"-----BEGIN PUBLIC KEY-----" in result.public_key.key
+
+
+def test_from_private_key_bytes_eth_key():
+    """Test Ethereum private key conversion."""
+    eth_private_key_bytes = b"\x01" * 32
+    result = from_private_key_bytes(eth_private_key_bytes, SignatureType.ETH)
+    assert isinstance(result, PrivateKey)
+    assert result.type == SignatureType.ECDSA_SHA256
+    eth_key = eth_keys.PrivateKey(eth_private_key_bytes)
+    assert result.public_key.key == eth_key.public_key.to_bytes()

@@ -96,10 +96,10 @@ def from_private_key_bytes(key: bytes, signature_type: SignatureType) -> Private
         private_key = serialization.load_pem_private_key(key, password=None)
         if not isinstance(private_key, ec.EllipticCurvePrivateKey):
             raise ValueError("Provided key is not an ECDSA private key.")
-        return from_ecdsa_private_key(private_key)
+        return from_ecdsa_private_key(private_key) #
 
     elif signature_type in {SignatureType.BTC, SignatureType.ETH, SignatureType.BTCLegacy}:
-        return from_eth_private_key(key)
+        return from_eth_private_key(key) #
 
     else:
         raise ValueError(f"Unsupported signature type: {signature_type}")

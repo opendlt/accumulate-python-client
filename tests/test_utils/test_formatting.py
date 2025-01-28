@@ -110,18 +110,21 @@ def test_validate_precision():
         validate_precision(1001)
 
 # Test Key Page URL Functions
-def test_format_key_page_url():
-    result = format_key_page_url("http://example.com/keybook", 0)
-    assert result == "http://example.com/keybook/1"
+def test_parse_key_page_url():
+    # Valid key page URL
+    url = "acc://example.acme/keybook/2"
+    result = parse_key_page_url(url)
+    assert result == ("acc://example.acme/keybook", 1)  # Page index is 0-based
+
 
 def test_parse_key_page_url():
-    url = "http://example.com/keybook/2"
+    url = "acc://example.acme/keybook/2"
     result = parse_key_page_url(url)
-    assert result == ("http://example.com/keybook", 1)
+    assert result == ("acc://example.acme/keybook", 1)
 
 def test_parse_key_page_url_invalid():
     with pytest.raises(ValueError):
-        parse_key_page_url("http://example.com/keybook")
+        parse_key_page_url("acc://example.acme/keybook")
 
 # Edge Cases
 def test_format_amount_zero_precision():
@@ -142,4 +145,72 @@ def test_format_big_amount_invalid_precision():
 
 def test_format_key_page_url_negative_index():
     with pytest.raises(ValueError):
-        format_key_page_url("http://example.com/keybook", -1)
+        format_key_page_url("acc://example.acme/keybook", -1)
+
+
+
+
+
+
+
+# Test for `if len(hash_bytes) > 20: hash_bytes = hash_bytes[-20:]`
+def test_format_eth_truncate_last_20_bytes():
+    """Test ETH address formatting truncates to last 20 bytes."""
+    hash_bytes = bytes.fromhex("00" * 10 + "abcdef" * 3)  # 30 bytes
+    result = format_eth(hash_bytes)
+    assert result.startswith("0x")
+    assert len(result) == 42  # '0x' + 40 hex characters
+    assert result.endswith("abcdefabcdefabcdef")  # Last 20 bytes used
+
+# Test for `if not hash_bytes: raise ValueError("Hash bytes cannot be empty")`
+def test_format_with_empty_hash_bytes():
+    """Test address formatting raises ValueError on empty hash bytes."""
+    with pytest.raises(ValueError, match="Hash bytes cannot be empty"):
+        format_ac1(b"")
+    with pytest.raises(ValueError, match="Hash bytes cannot be empty"):
+        format_fa(b"")
+    with pytest.raises(ValueError, match="Hash bytes cannot be empty"):
+        format_mh(b"", "sha256")
+
+# Test for `if not ipart: ipart = "0"`
+def test_format_amount_with_zero_integer_part():
+    """Test formatting an amount with only fractional digits."""
+    result = format_amount(123, 5)  # 0.00123
+    assert result == "0.00123"
+    result_big = format_big_amount(Decimal("123"), 5)  # 0.00123
+    assert result_big == "0.00123"
+
+def test_parse_key_page_url_invalid_format():
+    """Test parsing an invalid key page URL raises ValueError."""
+
+    # Case: Missing key book and page number
+    try:
+        parse_key_page_url("acc://example.acme")  # Just ADI
+    except ValueError as e:
+        print(f"DEBUG: Caught ValueError: {e}")
+        assert "must include ADI, key book, and page number" in str(e)
+
+    # Case: Missing page number
+    try:
+        parse_key_page_url("acc://example.acme/keybook")  # Key book, but no page number
+    except ValueError as e:
+        print(f"DEBUG: Caught ValueError: {e}")
+        assert "must include ADI, key book, and page number" in str(e)
+
+    # Case: Invalid page number
+    try:
+        parse_key_page_url("acc://example.acme/keybook/invalid")  # Non-integer page number
+    except ValueError as e:
+        print(f"DEBUG: Caught ValueError: {e}")
+        assert "page number 'invalid' is not a valid integer" in str(e)
+
+    # Case: Valid key page URL
+    key_book_url, page_index = parse_key_page_url("acc://example.acme/keybook/1")
+    assert key_book_url == "acc://example.acme/keybook"
+    assert page_index == 0
+
+
+
+
+
+
