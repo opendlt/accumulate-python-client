@@ -10,23 +10,23 @@ from accumulate.constants import TLD, ACCOUNT_URL_MAX_LENGTH
 
 # Define custom exceptions
 class URLParseError(Exception):
-    """Base class for URL parsing errors."""
+    """Base class for URL parsing errors"""
 
 
 class MissingHostError(URLParseError):
-    """Raised when a URL does not include a hostname."""
+    """Raised when a URL does not include a hostname"""
 
 
 class WrongSchemeError(URLParseError):
-    """Raised when a URL includes an invalid scheme."""
+    """Raised when a URL includes an invalid scheme"""
 
 
 class MissingHashError(URLParseError):
-    """Raised when a transaction ID does not include a hash."""
+    """Raised when a transaction ID does not include a hash"""
 
 
 class InvalidHashError(URLParseError):
-    """Raised when a transaction ID includes an invalid hash."""
+    """Raised when a transaction ID includes an invalid hash"""
 
 
 # Helper functions for detailed error messages
@@ -39,7 +39,7 @@ def wrong_scheme(url: str) -> WrongSchemeError:
 
 
 def missing_hash(url: str) -> MissingHashError:
-    return MissingHashError(f"{url} is not a transaction ID: Missing hash.") #
+    return MissingHashError(f"{url} is not a transaction ID: Missing hash") #
 
 
 def invalid_hash(url: str, error_details: Any) -> InvalidHashError:
@@ -72,13 +72,13 @@ class URL:
 
     @staticmethod
     def parse(url_str: str) -> "URL":
-        """Parse a string into an Accumulate URL."""
+        """Parse a string into an Accumulate URL"""
         print(f"DEBUG: Starting parse method with URL string: {url_str}")
 
         # Validate input
         if not url_str:
-            print(f"ERROR: Received empty URL string.")
-            raise ValueError("URL string cannot be empty.")
+            print(f"ERROR: Received empty URL string")
+            raise ValueError("URL string cannot be empty")
 
         # Ensure correct scheme
         if not url_str.startswith("acc://"):
@@ -111,7 +111,7 @@ class URL:
         # Ensure a valid netloc (authority)
         if not parsed.netloc:
             print(f"ERROR: Parsed URL missing authority component. URL: {url_str}, netloc: {parsed.netloc}")
-            raise ValueError("Invalid URL: Authority cannot be empty.")
+            raise ValueError("Invalid URL: Authority cannot be empty")
 
         # Validate and handle user_info and authority
         user_info, authority = "", parsed.netloc

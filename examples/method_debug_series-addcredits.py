@@ -1,3 +1,4 @@
+# examples\method_debug_series-addcredits.py
 
 #!/usr/bin/env python3
 import asyncio

@@ -95,7 +95,7 @@ async def test_submit_success(client, mock_transport, valid_envelope):
     result = await client.submit(valid_envelope, verify=True, wait=True)
 
     assert isinstance(result, list)
-    # Since the implementation returns raw dictionaries, verify keys and values.
+    # Since the implementation returns raw dictionaries, verify keys and values
     assert all(isinstance(item, dict) for item in result)
     assert result[0]["txid"] == "123"
     assert result[0]["status"] == {"state": "PENDING"}

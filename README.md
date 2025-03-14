@@ -58,9 +58,10 @@ pip install -r requirements.txt
 ## Quick Start & Usage
 
 ### End points: 
-- Testnet: https://testnet.accumulatenetwork.io/v2
-- Mainnet: https://mainnet.accumulatenetwork.io/v2
-
+```bash
+- Testnet: https://testnet.accumulatenetwork.io/v3
+- Mainnet: https://mainnet.accumulatenetwork.io/v3
+```
 
 ### Quick Start Examples for accumulate-python-client:
 

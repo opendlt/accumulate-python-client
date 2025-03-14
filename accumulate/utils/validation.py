@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 async def process_signer_url(url: URL, client: Optional["AccumulateClient"] = None) -> dict:
     """
-    Determines if a signer is a Lite Identity, Key Page, or ADI and fetches signer version.
+    Determines if a signer is a Lite Identity, Key Page, or ADI and fetches signer version
 
     Returns:
         dict: {

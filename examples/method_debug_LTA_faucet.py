@@ -1,3 +1,5 @@
+# \examples\method_debug_LTA_faucet.py
+
 import asyncio
 import logging
 from accumulate.api.client import AccumulateClient
