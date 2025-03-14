@@ -8,26 +8,18 @@ The **Accumulate Python Client** is a robust library designed for developers to 
 
 ## Key Features
 
-- **Account Management**: Effortlessly manage token accounts, lite accounts, and keybooks.
-- **Transaction Handling**: Construct, sign, and submit blockchain transactions with ease.
-- **Event and Data Querying**: Fetch and process data from the Accumulate blockchain.
-- **Cryptographic Utilities**: Tools for signing, verifying, and working with keys and addresses.
-- **Blockchain Utilities**: Support for URL parsing, data encoding, and validation.
+- **Account Management**: Manage digital identities, keys, accounts, tokens, and data
+- **Transaction Handling**: Construct, sign, and submit blockchain transactions
+- **Event and Data Querying**: Fetch and process data from the Accumulate blockchain
+- **Cryptographic Utilities**: Tools for signing, verifying, and working with keys and accounts
+- **Blockchain Utilities**: Support for URL parsing, data encoding, and validation
 
 ---
 
 ## Full Documentation
 
-Full documentation, including **usage instructions, examples, and API references**, is available here:
-
-👉 **[View Full Documentation](https://opendlt.github.io/accumulate-python-client/)**
-
-### Key Sections:
-- [API Reference](https://opendlt.github.io/accumulate-python-client/api_reference/)
-- [Getting Started](https://opendlt.github.io/accumulate-python-client/getting_started/)
-- [Examples](https://opendlt.github.io/accumulate-python-client/examples/)
-- [Contributing](https://opendlt.github.io/accumulate-python-client/contributing/)
-- [Changelog](https://opendlt.github.io/accumulate-python-client/changelog/)
+Extensive documentation including **examples and API references** is available here:
+ **[View Full Documentation](https://opendlt.github.io/accumulate-python-client/)**
 
 ---
 
@@ -82,8 +74,8 @@ pip install -r requirements.txt
 
 Below sample code demonstrates library use to:
 - Create a Lite Token Account
-- Testnet Faucet for testnet ACME tokens
-- Purchase credits
+- Testnet Faucet for receiving testnet ACME tokens
+- Purchase account credits for acitons on the accumulate blockchain
 - Transfer tokens between Lite Token Accounts
 - Create a human readable Accumulate Digitial Identifer (ADI) 
 
@@ -288,13 +280,12 @@ accumulate-python-client/
 
 ## Contributing
 
-Contributions are welcome! If you’d like to improve this library, submit a pull request or open an issue.
-
-1. Fork the repository.
-2. Create a feature branch: `git checkout -b feature-name`.
-3. Commit your changes: `git commit -m "Description of changes"`.
-4. Push to the branch: `git push origin feature-name`.
-5. Open a pull request.
+Contributions are welcome! If you’d like to improve this library, submit a pull request or open an issue
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature-name`
+3. Commit your changes: `git commit -m "Description of changes"`
+4. Push to the branch: `git push origin feature-name`
+5. Open a pull request
 
 ---
 
@@ -304,6 +295,8 @@ This project is licensed under the terms of the MIT License. See the `LICENSE` f
 
 ---
 
-## Acknowledgements
+## Access & Acknowledgements
 
-This library was developed by **Jason Gregoire** for [OpenDLT.org](https://opendlt.org), with a mission to leverage Distributed Ledger Technology (DLT) for enhanced global freedom.
+This opensource library is aviabale at **[GITHUB](https://github.com/opendlt/accumulate-python-client/)** and **[PYPI](https://pypi.org/project/accumulate-python-client/)** 
+
+Developement was provided by **Jason Gregoire** for [OpenDLT.org](https://opendlt.org), with a mission to leverage Distributed Ledger Technology (DLT) for greater global freedom.
