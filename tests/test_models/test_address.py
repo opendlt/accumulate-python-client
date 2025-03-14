@@ -5,7 +5,7 @@ import hashlib
 from accumulate.models.address import (
     Address,
     Unknown,
-    PublicKeyHash,
+    PublicKeyHashAddress,
     PublicKey,
     PrivateKey,
     Lite,
@@ -31,7 +31,7 @@ class TestAddress(unittest.TestCase):
     def test_public_key_hash_address(self):
         signature_type = "ED25519"
         hash_value = hashlib.sha256(b"test").digest()
-        address = PublicKeyHash(signature_type, hash_value)
+        address = PublicKeyHashAddress(signature_type, hash_value)
 
         self.assertEqual(address.get_type(), signature_type)
         self.assertEqual(address.get_public_key_hash(), (hash_value, True))

@@ -34,8 +34,11 @@ def test_timestamp_from_value_negative():
 # Tests for TimestampFromVariable
 def test_timestamp_from_variable_default():
     ts = TimestampFromVariable()
-    assert ts.get() == 1
-    assert ts.get() == 2
+    first = ts.get()
+    second = ts.get()
+    # Ensure that the timestamp increments by 1 regardless of the starting value
+    assert second - first == 1
+
 
 def test_timestamp_from_variable_custom_initial():
     ts = TimestampFromVariable(10)

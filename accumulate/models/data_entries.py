@@ -1,91 +1,68 @@
 # accumulate-python-client\accumulate\models\data_entries.py
 
+from asyncio.log import logger
 import hashlib
+import io
 from typing import List, Union
 from accumulate.models.enums import DataEntryType
-print(f"DEBUG: DataEntryType Enum: {list(DataEntryType)}")
+from accumulate.utils.encoding import bytes_marshal_binary, encode_uvarint, read_uvarint, unmarshal_bytes
 
 class DataEntry:
     """Base class for data entries."""
 
     def __init__(self, data: List[bytes]):
-        """
-        Initialize a data entry.
-
-        :param data: List of byte arrays representing the data.
-        """
+        if not isinstance(data, list) or not all(isinstance(d, bytes) for d in data):
+            raise TypeError("Data must be a list of byte arrays.")
         self.data = data
 
-    def type(self) -> int:
-        """
-        Return the type of the data entry.
-        Must be implemented by subclasses.
-        """
+    def type(self) -> DataEntryType:
+        """Return the data entry type (must be implemented by subclasses)."""
         raise NotImplementedError("Type method must be implemented by subclasses.")
 
     def get_data(self) -> List[bytes]:
-        """
-        Return the raw data of the entry.
-        """
+        """Return the raw data of the entry."""
         return self.data
 
     def hash(self) -> bytes:
-        """
-        Return the hash of the data entry.
-        Must be implemented by subclasses.
-        """
+        """Return the hash of the data entry (must be implemented by subclasses)."""
         raise NotImplementedError("Hash method must be implemented by subclasses.")
 
     def marshal(self) -> bytes:
         """
         Serialize the DataEntry to bytes.
+         FIX: Ensure the correct entry encoding.
         """
-        # Serialize the type as the first byte
-        type_byte = self.type().value.to_bytes(1, "big")  # Use `.value`
-        # Serialize the number of chunks
-        chunk_count = len(self.data).to_bytes(2, "big")
-        # Serialize each data chunk (length-prefixed)
-        serialized_chunks = b"".join(len(chunk).to_bytes(4, "big") + chunk for chunk in self.data)
-        return type_byte + chunk_count + serialized_chunks
+        type_byte = encode_uvarint(self.type().value)  #  Correctly encode DataEntryType
+        serialized_chunks = b"".join(bytes_marshal_binary(chunk) for chunk in self.data)
+
+        return type_byte + serialized_chunks
 
 
     @classmethod
     def unmarshal(cls, data: bytes) -> "DataEntry":
-        print(f"DEBUG: Starting unmarshal with data: {data}")
-        if len(data) < 3:
-            raise ValueError("Data too short to unmarshal: must include type and chunk count.")  #
+        """Deserialize a data entry from bytes."""
+        logger.debug(f" Unmarshaling DataEntry")
 
-        type_byte = data[0]
-        print(f"DEBUG: Parsed type_byte: {type_byte}")
-        chunk_count = int.from_bytes(data[1:3], "big")
-        print(f"DEBUG: Parsed chunk_count: {chunk_count}")
-        
-        offset = 3
-        chunks = []
-        for _ in range(chunk_count):
-            if offset + 4 > len(data):
-                raise ValueError(f"Data too short to read chunk length at offset {offset}.")
-            
-            chunk_length = int.from_bytes(data[offset:offset + 4], "big")
-            offset += 4
-            
-            if offset + chunk_length > len(data):
-                raise ValueError(f"Data too short to read chunk at offset {offset}, expected length {chunk_length}.") #
-            
-            chunk = data[offset:offset + chunk_length]
-            offset += chunk_length
-            chunks.append(chunk)
+        reader = io.BytesIO(data)
 
-        print(f"DEBUG: Parsed chunks: {chunks}")
+        #  Step 1: Read **DataEntryType**
+        type_value = read_uvarint(reader)
+        if type_value not in {DataEntryType.ACCUMULATE.value, DataEntryType.DOUBLE_HASH.value}:
+            raise ValueError(f"Unknown DataEntryType: {type_value}")
 
-        if type_byte == DataEntryType.ACCUMULATE.value:
+        #  Step 2: Read **Chunk Count**
+        chunk_count = read_uvarint(reader)
+
+        #  Step 3: Read **Each Data Chunk**
+        chunks = [unmarshal_bytes(reader) for _ in range(chunk_count)]
+
+        #  Step 4: Return the correct DataEntry subclass
+        if type_value == DataEntryType.ACCUMULATE.value:
             return AccumulateDataEntry(chunks)
-        elif type_byte == DataEntryType.DOUBLE_HASH.value:
-            return DoubleHashDataEntry(chunks)  #
+        elif type_value == DataEntryType.DOUBLE_HASH.value:
+            return DoubleHashDataEntry(chunks)
         else:
-            raise ValueError(f"Unknown DataEntry type: {type_byte}")
-
-
+            raise ValueError(f"Unexpected DataEntryType: {type_value}")
 
 
 class AccumulateDataEntry(DataEntry):
@@ -104,29 +81,61 @@ class AccumulateDataEntry(DataEntry):
         """
         Serialize the DataEntry to bytes.
         """
-        # Serialize the type as the first byte
-        type_byte = self.type().value.to_bytes(1, "big")  # Ensure `.value` is used for the Enum
-        # Serialize the number of chunks
-        chunk_count = len(self.data).to_bytes(2, "big")
-        # Serialize each data chunk (length-prefixed)
-        serialized_chunks = b"".join(len(chunk).to_bytes(4, "big") + chunk for chunk in self.data)
+        type_byte = encode_uvarint(2)
+        chunk_count = encode_uvarint(len(self.data))  #  Use uvarint encoding for chunk count
+        serialized_chunks = b"".join(bytes_marshal_binary(chunk) for chunk in self.data)
+        
         return type_byte + chunk_count + serialized_chunks
 
-
+    def to_dict(self) -> dict:
+        """
+         Convert AccumulateDataEntry to a JSON-serializable dictionary.
+        """
+        return {
+            "type": "accumulate",  #  Ensure type matches expected JSON output
+            "data": [chunk.hex() for chunk in self.data]  #  Convert bytes to hex
+        }
 
 
 class DoubleHashDataEntry(DataEntry):
-    """Represents a double-hash data entry."""
+    """Represents a double-hash data entry (Used in Go JSON)."""
 
     def type(self) -> DataEntryType:
+        """Return the DataEntryType for double-hash entries."""
         return DataEntryType.DOUBLE_HASH
 
     def hash(self) -> bytes:
+        """Compute the double SHA-256 hash (Merkle root of the data)."""
         hasher = hashlib.sha256()
         for chunk in self.data:
             hasher.update(chunk)
         merkle_root = hasher.digest()
         return hashlib.sha256(merkle_root).digest()
+
+    def marshal(self) -> bytes:
+        """
+        Serialize the DataEntry to bytes.
+         FIX: Ensure the correct entry encoding.
+        """
+        entry_type = encode_uvarint(1)  #  Entry field identifier is always `01`
+        type_value = encode_uvarint(self.type().value)  #  Encode `03` for doubleHash
+        data_field = encode_uvarint(2)  #  Data field identifier is always `02`
+        
+        serialized_chunks = b"".join(bytes_marshal_binary(chunk) for chunk in self.data)
+
+        return entry_type + type_value + data_field + serialized_chunks  #  Fix order!
+
+
+    def to_dict(self) -> dict:
+        """
+         Convert DoubleHashDataEntry to a JSON-serializable dictionary.
+        """
+        return {
+            "type": "doubleHash",  #  Ensure type matches expected JSON output
+            "data": [chunk.hex() for chunk in self.data]  #  Convert bytes to hex
+        }
+
+
 
 
 class DataEntryUtils:

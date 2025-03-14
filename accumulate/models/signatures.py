@@ -5,11 +5,15 @@ from typing import List, Dict, Any, Optional, Tuple
 from eth_keys import keys
 from eth_utils import decode_hex, keccak
 from ecdsa import VerifyingKey, SECP256k1, SigningKey
+from cryptography.hazmat.primitives.asymmetric import ed25519
 from Crypto.PublicKey import RSA
 from Crypto.Signature import pkcs1_15
 from Crypto.Hash import SHA256
 from accumulate.utils.url import URL
+from accumulate.models.types import Message
 import binascii
+import time
+from accumulate.utils.import_helpers import get_signer 
 
 class Signature:
     """Base class for managing all signature types."""
@@ -28,89 +32,60 @@ class Signature:
     def get_signature(self) -> Optional[bytes]:
         return self.signature
 
-    def hash(self) -> bytes:
-        raise NotImplementedError("Subclasses should implement this method.")
+    def hash(self, message: bytes) -> bytes:
+        """Follow JS hashing structure: First hash signature metadata, then concatenate and hash with message."""
+        sig_md_hash = hashlib.sha256(self.encode()).digest()
+        final_hash = hashlib.sha256(sig_md_hash + message).digest()
+        return final_hash
+
+    def encode(self) -> bytes:
+        """Serialize signature metadata for consistent hashing."""
+        signer_bytes = str(self.signer).encode() if self.signer else b""
+        return self.signature_type.encode() + signer_bytes + str(self.version).encode()
+
 
     def verify(self, msg: bytes) -> bool:
         raise NotImplementedError("Subclasses should implement this method.")
 
-
-# ========== Signer Management ==========
-
-class Signer:
-    """Represents a generic signer with URL and version information."""
-    def __init__(self, url: URL, version: int):
-        self.url = url
-        self.version = version
-
-    def get_url(self) -> URL:
-        return self.url
-
-    def get_version(self) -> int:
-        return self.version
-
-
-class LiteSigner(Signer):
-    """Lite signer for simplified handling of signers."""
-    def __init__(self, url: URL, version: int):
-        super().__init__(url, version)
-
-
-class SignerManager:
-    """Manages a list of signers with utilities for adding and searching."""
-    def __init__(self):
-        self.signers: List[Signer] = []
-
-    def add_signer(self, signer: Signer) -> None:
-        """Add a signer, ensuring the list remains sorted and updated."""
-        for i, existing in enumerate(self.signers):
-            if existing.get_url() == signer.get_url():
-                # Update if the new version is higher
-                if signer.get_version() > existing.get_version():
-                    self.signers[i] = signer
-                return
-        # Insert in sorted order
-        self.signers.append(signer)
-        self.signers.sort(key=lambda s: str(s.get_url()))
-
-
-    def find_signers(self, authority: URL) -> List[Signer]:
-        """Find all signers under a given authority."""
-        return [s for s in self.signers if is_parent_of(authority, s.get_url())]
-
-
-    def get_signer(self, url: URL) -> Optional[Signer]:
-        """Retrieve a signer by URL."""
-        for signer in self.signers:
-            if signer.get_url() == url:
-                return signer
-        return None #
-
-
-# ========== Authority and Parent-Child Relationships ==========
-
-def is_parent_of(parent: URL, child: URL) -> bool:
-    """Check if a URL is a parent of another URL."""
-    return str(child).startswith(str(parent))
 
 # ========== ED25519 Signature ==========
 
 class ED25519Signature(Signature):
-    def __init__(self, signer: URL, public_key: bytes, signature: bytes):
-        super().__init__('ED25519', signer, 1)
-        self.public_key = public_key
+    
+    def __init__(self, signer: URL, publicKey: bytes, signature: bytes, transaction_data: bytes):
+        super().__init__('ed25519', signer, 1)
+        self.publicKey = publicKey
         self.signature = signature
+        self.timestamp = int(time.time() * 1e6)
+        from accumulate.utils.hash_functions import hash_data
+        self.transactionHash = hash_data(transaction_data).hex()
 
-    def hash(self) -> bytes:
-        return do_sha256(self.public_key)
+    def hash(self, message: bytes) -> bytes:
+        """Follow JS hashing structure for ED25519."""
+        sig_md_hash = hashlib.sha256(self.encode()).digest()
+        final_hash = hashlib.sha256(sig_md_hash + message).digest()
+        return final_hash
 
     def verify(self, msg: bytes) -> bool:
         try:
-            vk = VerifyingKey.from_string(self.public_key, curve=SECP256k1)
-            return vk.verify(self.signature, msg)
+            vk = ed25519.Ed25519PublicKey.from_public_bytes(self.publicKey)
+            final_hash = self.hash(msg)  # Ensure message is hashed before verification
+            vk.verify(self.signature, final_hash)
+            return True
         except Exception:
             return False
 
+    def to_dict(self) -> dict:
+        """Convert ED25519 signature to a dictionary."""
+        return {
+            "type": self.signature_type.lower(),
+            "publicKey": self.publicKey.hex(),
+            "signature": self.signature.hex(),
+            "signer": str(self.signer),
+            "signerVersion": self.version,
+            "timestamp": self.timestamp,
+            "transactionHash": self.transactionHash,
+        }
 
 # ========== EIP-712 Typed Data Signature ==========
 
@@ -138,9 +113,9 @@ class EIP712Signature(Signature):
             result = eth_key.verify_msg_hash(message_hash, keys.Signature(self.signature))
             print(f"Debug: Verification result={result}")
             return result
-        except Exception as e:
-            print(f"Error during verification: {e}")
-            return False
+        except Exception as e: #
+            print(f"Error during verification: {e}") #
+            return False #
 
     @staticmethod
     def _encode_typed_data(data: Dict[str, Any]) -> bytes:
@@ -313,7 +288,7 @@ class AuthoritySignature(Signature):
         return result_hash
 
     def verify(self, msg: bytes) -> bool:
-        # Placeholder: Implement authority-specific verification
+        # TODO: Implement authority-specific verification
         return True
 
 # ========== RCD1 Signature ==========
@@ -508,6 +483,13 @@ class PrivateKey:
     def __repr__(self):
         return f"<PrivateKey type={self.type}, key={self.key.hex()}>"
 
+    def to_dict(self) -> dict:
+        return {
+            "type": self.type,
+            "key": self.key.hex(),
+            "public_key": self.public_key.to_dict() if self.public_key else None,
+        }
+
     def get_type(self) -> str:
         """
         Get the type of the private key.
@@ -546,6 +528,9 @@ class PublicKeyHash:
         self.type = type_
         self.hash = hash_
 
+    def to_dict(self) -> dict:
+        return {"type": self.type, "hash": self.hash.hex()}
+
     def __repr__(self):
         return f"<PublicKeyHash type={self.type}, hash={self.hash.hex()}>"
 
@@ -560,6 +545,7 @@ class PublicKeyHash:
     def __str__(self):
         """String representation of the address."""
         return f"{self.type}:{self.hash.hex()}"
+
 
 
 class Lite:

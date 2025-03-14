@@ -17,8 +17,7 @@ from accumulate.utils.address_from import (
 )
 from accumulate.models.signatures import PublicKey, PrivateKey
 from accumulate.models.signature_types import SignatureType
-
-
+import base64
 
 # Constants
 VALID_ED25519_PUBLIC_KEY = b"\x01" * 32
@@ -56,7 +55,8 @@ def test_from_ed25519_private_key_valid():
     result = from_ed25519_private_key(VALID_ED25519_PRIVATE_KEY)
     assert isinstance(result, PrivateKey)
     assert result.type == SignatureType.ED25519
-    assert result.key == VALID_ED25519_PRIVATE_KEY
+    assert result.key == VALID_ED25519_PRIVATE_KEY[:32]
+
 
     # Dynamically compute the expected public key
     private_key = Ed25519PrivateKey.from_private_bytes(VALID_ED25519_PRIVATE_KEY[:32])
@@ -64,6 +64,9 @@ def test_from_ed25519_private_key_valid():
         encoding=serialization.Encoding.Raw,
         format=serialization.PublicFormat.Raw
     )
+
+    print("Expected:", VALID_ED25519_PRIVATE_KEY)
+    print("Actual:", result.key)
     assert result.public_key.key == expected_public_key
 
 

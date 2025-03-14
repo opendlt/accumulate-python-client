@@ -9,9 +9,6 @@ __all__ = [
     "Builder",
     "InitHashMode",
     
-    # From signer.py
-    "Signer",
-    
     # From timestamp.py
     "Timestamp",
     "TimestampFromValue",

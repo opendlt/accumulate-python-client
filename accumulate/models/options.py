@@ -21,16 +21,6 @@ class RangeOptions:
             "from_end": self.from_end,
         }
 
-
-@dataclass
-class FindServiceOptions:
-    """Options for finding a service."""
-    network: str  # Network name
-    service: Optional[str] = None  # Service address
-    known: Optional[bool] = None  # Restrict to known peers
-    timeout: Optional[float] = None  # Timeout in seconds
-
-
 @dataclass
 class SubmitOptions:
     """Options for submitting transactions."""
@@ -69,3 +59,8 @@ class ReceiptOptions:
             "for_any": self.for_any,
             "for_height": self.for_height,
         }
+
+    def is_valid(self) -> bool:
+        """Validate the receipt options."""
+        return self.for_any or self.for_height is not None
+

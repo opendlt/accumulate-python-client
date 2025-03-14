@@ -9,7 +9,7 @@ class Submission:
     """
     Represents a transaction submission in the Accumulate blockchain.
     """
-    txid: Optional[str] = None  # Add the `txid` field
+    txid: Optional[str] = None  # Add `txid` field
     status: Optional[Dict[str, Any]] = None  # Corresponds to protocol.TransactionStatus
     success: bool = False  # Indicates whether the envelope was successfully submitted
     message: Optional[str] = None  # Message returned by the consensus engine
@@ -35,7 +35,7 @@ class Submission:
         Creates a Submission instance from a dictionary.
         """
         return cls(
-            txid=data.get("txid"),  # Extract the `txid` field
+            txid=data.get("txid"),  # extract the `txid` field
             status=data.get("status"),
             success=data.get("success", False),
             message=data.get("message"),

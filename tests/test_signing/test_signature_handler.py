@@ -1,8 +1,9 @@
 # accumulate-python-client\tests\test_signing\test_signature_handler.py 
 
+from accumulate.utils.validation import ValidationError
 import pytest
 import hashlib
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock, MagicMock, patch
 from cryptography.hazmat.primitives.asymmetric import ed25519, rsa, ec, padding
 from accumulate.signing.signature_handler import SignatureHandler
 from accumulate.models.signature_types import SignatureType
@@ -13,6 +14,7 @@ from cryptography.hazmat.primitives.hashes import SHA256
 from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 from accumulate.models.signatures import Signature
 from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
+from eth_keys.exceptions import BadSignature
 
 # Helper Functions
 def generate_ed25519_keys():
@@ -52,7 +54,6 @@ def generate_rsa_keys():
             format=serialization.PublicFormat.SubjectPublicKeyInfo,
         ),
     )
-
 
 # Test Cases
 def test_sign_ed25519():
@@ -95,10 +96,6 @@ def test_verify_eth_invalid():
     message_hash = hashlib.sha256(b"Test Message").digest()
     signature = b"invalid"  # Invalid signature of incorrect length
     assert not SignatureHandler.verify_eth(public_key, message_hash, signature)
-
-##########################
-##########################
-##########################
 
 @pytest.fixture
 def delegator_url():
@@ -167,8 +164,6 @@ def test_verify_rsa_sha256():
     # Verify the signature using the updated verification method
     assert SignatureHandler.verify_rsa_sha256(public_key_bytes, message, signature) is True
 
-
-
 def test_sign_btc():
     """Test signing with BTC."""
     private_key = b"\x01" * 32
@@ -236,25 +231,24 @@ def test_verify_delegated_signature_valid(delegator_url):
     expected_signature = SignatureHandler.sign_delegated_signature(inner_signature, delegator_url)
     assert SignatureHandler.verify_delegated_signature(expected_signature, inner_signature, delegator_url)
 
-
-
 def test_verify_merkle_hash():
     """Test verifying a Merkle hash."""
     metadata_hash = hashlib.sha256(b"metadata").digest()
     txn_hash = hashlib.sha256(b"transaction").digest()
 
-    # Mock the Signature object with a transaction_hash attribute
+    # Mock the Signature object with a transactionHash attribute (camelCase)
     signature = MagicMock()
-    signature.transaction_hash = hashlib.sha256(metadata_hash + txn_hash).digest()
+    signature.transactionHash = hashlib.sha256(metadata_hash + txn_hash).digest()
 
     # Test the verify_merkle_hash method
     assert SignatureHandler.verify_merkle_hash(metadata_hash, txn_hash, signature)
+
 
 def test_sign_authority_signature(origin_url, authority_url):
     """Test signing an authority signature."""
     vote = "approve"
     txid = "12345"
-    result = SignatureHandler.sign_authority_signature(origin_url, authority_url, vote, txid)
+    result = SignatureHandler.create_authority_signature(origin_url, authority_url, vote, txid)
     expected_hash = hashlib.sha256(
         str(origin_url).encode()
         + str(authority_url).encode()
@@ -263,7 +257,6 @@ def test_sign_authority_signature(origin_url, authority_url):
     ).digest()
     assert result == expected_hash
 
-
 def test_verify_authority_signature_valid(origin_url, authority_url):
     """Test verifying a valid authority signature."""
     vote = "approve"
@@ -271,32 +264,29 @@ def test_verify_authority_signature_valid(origin_url, authority_url):
     signature = SignatureHandler.sign_authority_signature(origin_url, authority_url, vote, txid)
     assert SignatureHandler.verify_authority_signature(signature, origin_url, authority_url, vote, txid) is True
 
-
-
-###########
-
 def test_create_authority_signature():
     """Test creating an authority signature."""
     # Use actual URL instances instead of mocks
     origin = URL(authority="origin")
     authority = URL(authority="authority")
-    
+
     # Call the method to create the authority signature
     result = SignatureHandler.create_authority_signature(origin, authority, "vote", "txid")
-    
-    # Calculate the expected hash
-    expected = hashlib.sha256(b"originauthorityvotetxid").digest()
-    
+
+    # Calculate the expected hash using the actual string representations of the URLs
+    expected = hashlib.sha256(
+        str(origin).encode() + str(authority).encode() + b"vote" + b"txid"
+    ).digest()
+
     # Assert the result matches the expected hash
     assert result == expected
-
 
 
 def test_verify_authority_signature_valid(origin_url, authority_url):
     """Test verifying a valid authority signature."""
     vote = "approve"
     txid = "12345"
-    signature = SignatureHandler.sign_authority_signature(origin_url, authority_url, vote, txid)
+    signature = SignatureHandler.create_authority_signature(origin_url, authority_url, vote, txid)
     assert SignatureHandler.verify_authority_signature(signature, origin_url, authority_url, vote, txid) is True
 
 
@@ -306,8 +296,6 @@ def test_verify_authority_signature_invalid(origin_url, authority_url):
     txid = "12345"
     signature = b"invalid"
     assert not SignatureHandler.verify_authority_signature(signature, origin_url, authority_url, vote, txid)
-
-
 
 def test_sign_delegated_signature():
     """Test signing a delegated signature."""
@@ -331,3 +319,185 @@ def test_verify_delegated_signature_invalid(delegator_url):
     """Test verifying an invalid delegated signature."""
     inner_signature = b"test_inner_signature"
     assert not SignatureHandler.verify_delegated_signature(b"invalid", inner_signature, delegator_url)
+
+def test_verify_eth_valid_signature():
+    """Test verifying a valid Ethereum signature."""
+    # Generate Ethereum keys
+    private_key, public_key = generate_eth_keys()
+    message_hash = hashlib.sha256(b"test_message").digest()
+
+    # Sign the message hash
+    signature = SignatureHandler.sign_eth(private_key, message_hash)
+
+    # Verify the signature
+    assert SignatureHandler.verify_eth(public_key, message_hash, signature) is True
+
+def test_verify_eth_invalid_signature_length():
+    """Test verifying an Ethereum signature with an invalid length."""
+    _, public_key = generate_eth_keys()
+    message_hash = hashlib.sha256(b"test_message").digest()
+    
+    # Invalid signature length
+    invalid_signature = b"\x00" * 63  # ETH signature length must be 65 bytes
+    assert not SignatureHandler.verify_eth(public_key, message_hash, invalid_signature)
+
+
+def test_verify_eth_invalid_signature_content():
+    """Test verifying an Ethereum signature with invalid content."""
+    private_key, public_key = generate_eth_keys()
+    message_hash = hashlib.sha256(b"test_message").digest()
+
+    # Sign the message hash
+    valid_signature = SignatureHandler.sign_eth(private_key, message_hash)
+
+    # Tamper with the valid signature by flipping a bit in the middle
+    tampered_signature = bytearray(valid_signature)
+    tampered_signature[len(tampered_signature) // 2] ^= 0xFF  # flip a bit in the middle
+    tampered_signature = bytes(tampered_signature)
+
+    # Debugging output
+    print(f"DEBUG: Valid signature: {valid_signature}")
+    print(f"DEBUG: Tampered signature: {tampered_signature}")
+    print(f"DEBUG: Public key: {public_key}")
+    print(f"DEBUG: Message hash: {message_hash}")
+
+    # Verify tampered signature
+    result = SignatureHandler.verify_eth(public_key, message_hash, tampered_signature)
+    print(f"DEBUG: Verification result for tampered signature: {result}")
+
+    # Verify the tampered signature fails
+    assert not result
+
+def test_verify_eth_invalid_public_key():
+    """Test verifying an Ethereum signature with an invalid public key."""
+    _, public_key = generate_eth_keys()
+    invalid_public_key = b"\x01" * len(public_key)  # Invalid public key
+    message_hash = hashlib.sha256(b"test_message").digest()
+
+    # Sign the message hash
+    private_key, _ = generate_eth_keys()
+    signature = SignatureHandler.sign_eth(private_key, message_hash)
+
+    # Verify the signature with an invalid public key
+    assert not SignatureHandler.verify_eth(invalid_public_key, message_hash, signature)
+
+
+def test_verify_eth_invalid_message_hash():
+    """Test verifying an Ethereum signature with an invalid message hash."""
+    private_key, public_key = generate_eth_keys()
+    valid_message_hash = hashlib.sha256(b"test_message").digest()
+
+    # Sign the valid message hash
+    signature = SignatureHandler.sign_eth(private_key, valid_message_hash)
+
+    # Use a different message hash for verification
+    invalid_message_hash = hashlib.sha256(b"invalid_message").digest()
+    assert not SignatureHandler.verify_eth(public_key, invalid_message_hash, signature)
+
+# Test `sign_eth` Method Call
+def test_sign_eth_method_call():
+    """Test that `sign_typed_data` correctly calls `sign_eth`."""
+    private_key = hashlib.sha256(b"test_key").digest()
+    message_hash = hashlib.sha256(b"Test Message").digest()
+
+    with patch.object(SignatureHandler, "sign_eth", return_value=b"mock_signature") as mock_sign:
+        signature = SignatureHandler.sign_typed_data(private_key, message_hash)
+    
+        # Ensure the method was called
+        mock_sign.assert_called_once_with(private_key, message_hash)
+        assert signature == b"mock_signature"
+
+
+def test_verify_eth_validation_error():
+    from eth_utils.exceptions import ValidationError as EthValidationError
+    """Test that `verify_eth` handles `ValidationError` properly."""
+    public_key = b"\x01" * 64  # Dummy public key
+    message_hash = hashlib.sha256(b"Test Message").digest()
+    signature = b"\x02" * 65  # Incorrect signature format
+
+    with patch("accumulate.signing.signature_handler.eth_keys.PublicKey", side_effect=EthValidationError("Invalid key")):
+        assert not SignatureHandler.verify_eth(public_key, message_hash, signature)
+
+
+# Test `verify_eth` with `BadSignature`
+def test_verify_eth_bad_signature():
+    """Test that `verify_eth` handles `BadSignature` properly."""
+    public_key = b"\x01" * 64  # Dummy public key
+    message_hash = hashlib.sha256(b"Test Message").digest()
+    signature = b"\x02" * 65  # Incorrect signature format
+
+    with patch("accumulate.signing.signature_handler.eth_keys.Signature.recover_public_key_from_msg_hash", side_effect=BadSignature):
+        assert not SignatureHandler.verify_eth(public_key, message_hash, signature)
+
+
+# Test `verify_eth` with Unexpected Exception
+def test_verify_eth_unexpected_exception():
+    """Test that `verify_eth` handles unexpected exceptions properly."""
+    public_key = b"\x01" * 64  # Dummy public key
+    message_hash = hashlib.sha256(b"Test Message").digest()
+    signature = b"\x02" * 65  # Incorrect signature format
+
+    with patch("accumulate.signing.signature_handler.eth_keys.Signature.recover_public_key_from_msg_hash", side_effect=Exception("Unexpected Error")):
+        assert not SignatureHandler.verify_eth(public_key, message_hash, signature)
+
+
+# Test `verify_rsa_sha256` with Exception
+def test_verify_rsa_sha256_exception():
+    """Test that `verify_rsa_sha256` returns False on an unexpected exception."""
+    public_key_pem = b"-----BEGIN PUBLIC KEY-----\nINVALID_KEY\n-----END PUBLIC KEY-----"
+    message = b"Test Message"
+    signature = b"invalid_signature"
+
+    # Mock the RSA key loading to raise an exception
+    with patch("cryptography.hazmat.primitives.serialization.load_pem_public_key", side_effect=Exception("Unexpected Error")):
+        assert not SignatureHandler.verify_rsa_sha256(public_key_pem, message, signature)
+
+# Test `verify_ecdsa_sha256` with Exception
+def test_verify_ecdsa_sha256_exception():
+    """Test that `verify_ecdsa_sha256` returns False on an unexpected exception."""
+    public_key = b"\x01" * 33  # Incorrect ECDSA public key length
+    message = b"Test Message"
+    signature = b"invalid_signature"
+
+    # Mock the ECDSA key parsing to raise an exception
+    with patch("cryptography.hazmat.primitives.asymmetric.ec.EllipticCurvePublicKey.from_encoded_point", side_effect=Exception("Unexpected Error")):
+        assert not SignatureHandler.verify_ecdsa_sha256(public_key, message, signature)
+
+# Test: Valid Ethereum Signature (Covers Successful Execution Path)
+def test_verify_eth_valid_signature2():
+    """Test that `verify_eth` correctly verifies a valid Ethereum signature."""
+    private_key = eth_keys.PrivateKey(hashlib.sha256(b"test_key").digest())
+    public_key = private_key.public_key.to_bytes()
+    message_hash = hashlib.sha256(b"Test Message").digest()
+    signature = private_key.sign_msg_hash(message_hash).to_bytes()
+
+    assert SignatureHandler.verify_eth(public_key, message_hash, signature) is True
+
+# Test: Invalid Signature Length (Covers `except ValidationError`)
+def test_verify_eth_invalid_signature_length2():
+    """Test that `verify_eth` returns False for an invalid signature length."""
+    public_key = eth_keys.PrivateKey(hashlib.sha256(b"test_key").digest()).public_key.to_bytes()
+    message_hash = hashlib.sha256(b"Test Message").digest()
+    invalid_signature = b"\x00" * 64  # Ethereum signatures must be 65 bytes
+
+    assert SignatureHandler.verify_eth(public_key, message_hash, invalid_signature) is False
+
+# Test: Bad Signature Content (Covers `except BadSignature`)
+def test_verify_eth_bad_signature2():
+    """Test that `verify_eth` returns False when signature content is invalid."""
+    public_key = eth_keys.PrivateKey(hashlib.sha256(b"test_key").digest()).public_key.to_bytes()
+    message_hash = hashlib.sha256(b"Test Message").digest()
+    bad_signature = b"\x00" * 65  # Random invalid signature
+
+    assert SignatureHandler.verify_eth(public_key, message_hash, bad_signature) is False
+
+# Test: Exception Raised (Covers Any Unexpected Exceptions)
+def test_verify_eth_unexpected_exception2():
+    """Test that `verify_eth` safely handles unexpected exceptions."""
+    public_key = eth_keys.PrivateKey(hashlib.sha256(b"test_key").digest()).public_key.to_bytes()
+    message_hash = hashlib.sha256(b"Test Message").digest()
+    signature = b"\x00" * 65  # Invalid Ethereum signature
+
+    #  Correctly mock `eth_keys.datatypes.Signature` instead of `eth_keys.Signature`
+    with patch("eth_keys.datatypes.Signature", side_effect=Exception("Unexpected Error")):
+        assert SignatureHandler.verify_eth(public_key, message_hash, signature) is False

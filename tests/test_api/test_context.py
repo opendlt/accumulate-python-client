@@ -26,8 +26,8 @@ def test_request_context_get_metadata_existing_key():
     """
     metadata = {"key1": "value1", "key2": "value2"}
     context = RequestContext(metadata=metadata)
-    assert context.get_metadata("key1") == "value1", "Should return the value for the existing key."
-    assert context.get_metadata("key2") == "value2", "Should return the value for the existing key."
+    assert context.get_metadata("key1") == "value1", "Should return the value for the existing key"
+    assert context.get_metadata("key2") == "value2", "Should return the value for the existing key"
 
 
 def test_request_context_get_metadata_nonexistent_key():
@@ -35,7 +35,7 @@ def test_request_context_get_metadata_nonexistent_key():
     Test retrieving metadata for a key that does not exist.
     """
     context = RequestContext(metadata={"key1": "value1"})
-    assert context.get_metadata("key2") is None, "Should return None for a nonexistent key."
+    assert context.get_metadata("key2") is None, "Should return None for a nonexistent key"
 
 
 def test_request_context_set_metadata_new_key():

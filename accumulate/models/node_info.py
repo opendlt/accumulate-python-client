@@ -10,11 +10,11 @@ class NodeInfo:
     """
     Represents information about a network node.
     """
-    peer_id: str  # Equivalent to PeerID in Go, representing the node's unique ID
-    network: str  # The name of the network (e.g., "mainnet" or "testnet")
-    services: List[ServiceAddress]  # The services the node provides
-    version: str  # The software version of the node
-    commit: str  # The commit hash of the software version
+    peer_id: str  # node's unique ID
+    network: str  # name of the network (e.g., "mainnet" or "testnet")
+    services: List[ServiceAddress]  # services the node provides
+    version: str  # software version of the node
+    commit: str  # commit hash of the software version
 
     @classmethod
     def from_dict(cls, data: dict) -> "NodeInfo":

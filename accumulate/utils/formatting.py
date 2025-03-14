@@ -9,43 +9,43 @@ from decimal import Decimal
 
 # Address Formatting Functions
 def format_ac1(hash_bytes: bytes) -> str:
-    """Formats an Accumulate AC1 (ed25519) public key hash."""
+    """Formats an Accumulate AC1 (ed25519) public key hash"""
     return _format_with_prefix(hash_bytes, "AC1")
 
 def format_as1(seed: bytes) -> str:
-    """Formats an Accumulate AS1 (ed25519) private key."""
+    """Formats an Accumulate AS1 (ed25519) private key"""
     return _format_with_prefix(seed, "AS1")
 
 def format_ac2(hash_bytes: bytes) -> str:
-    """Formats an Accumulate AC2 (ecdsa) public key hash."""
+    """Formats an Accumulate AC2 (ecdsa) public key hash"""
     return _format_with_prefix(hash_bytes, "AC2")
 
 def format_as2(seed: bytes) -> str:
-    """Formats an Accumulate AS2 (ecdsa) private key."""
+    """Formats an Accumulate AS2 (ecdsa) private key"""
     return _format_with_prefix(seed, "AS2")
 
 def format_ac3(hash_bytes: bytes) -> str:
-    """Formats an Accumulate AC3 (rsa) public key hash."""
+    """Formats an Accumulate AC3 (rsa) public key hash"""
     return _format_with_prefix(hash_bytes, "AC3")
 
 def format_as3(seed: bytes) -> str:
-    """Formats an Accumulate AS3 (rsa) private key."""
+    """Formats an Accumulate AS3 (rsa) private key"""
     return _format_with_prefix(seed, "AS3")
 
 def format_fa(hash_bytes: bytes) -> str:
-    """Formats a Factom FA public key hash."""
+    """Formats a Factom FA public key hash"""
     return _format_with_checksum(hash_bytes, b'\x5f\xb1')
 
 def format_fs(seed: bytes) -> str:
-    """Formats a Factom Fs private key."""
+    """Formats a Factom Fs private key"""
     return _format_with_checksum(seed, b'\x64\x78')
 
 def format_btc(hash_bytes: bytes) -> str:
-    """Formats a Bitcoin P2PKH address prefixed with 'BT'."""
+    """Formats a Bitcoin P2PKH address prefixed with 'BT'"""
     return "BT" + _format_with_checksum(hash_bytes, b'\x00')
 
 def format_eth(hash_bytes: bytes) -> str:
-    """Formats an Ethereum address."""
+    """Formats an Ethereum address"""
     # Ensure the hash is exactly 20 bytes long by truncating or padding with zeros
     if len(hash_bytes) > 20:
         hash_bytes = hash_bytes[-20:]  # Take the last 20 bytes #
@@ -58,11 +58,11 @@ def format_eth(hash_bytes: bytes) -> str:
 
 def format_mh(hash_bytes: bytes, code: Optional[str] = "sha256") -> str:
     """
-    Formats a hash using a specified hashing algorithm and appends a checksum.
+    Formats a hash using a specified hashing algorithm and appends a checksum
 
-    :param hash_bytes: Input data to be hashed.
-    :param code: Hashing algorithm (e.g., 'sha256', 'sha512').
-    :return: Multihash-formatted string.
+    :param hash_bytes: Input data to be hashed
+    :param code: Hashing algorithm (e.g., 'sha256', 'sha512')
+    :return: Multihash-formatted string
     """
     if not hash_bytes:
         raise ValueError("Hash bytes cannot be empty")
@@ -80,11 +80,11 @@ def format_mh(hash_bytes: bytes, code: Optional[str] = "sha256") -> str:
 # Internal Helpers
 def _hash_with_algorithm(data: bytes, algorithm: str) -> bytes:
     """
-    Hashes data using the specified algorithm.
+    Hashes data using the specified algorithm
 
-    :param data: Data to hash.
+    :param data: Data to hash
     :param algorithm: Hashing algorithm (e.g., 'sha256', 'sha512').
-    :return: Hashed bytes.
+    :return: Hashed bytes
     """
     algorithms = {
         "sha256": hashes.SHA256,
@@ -98,7 +98,7 @@ def _hash_with_algorithm(data: bytes, algorithm: str) -> bytes:
     return digest.finalize()
 
 def _format_with_prefix(hash_bytes: bytes, prefix: str) -> str:
-    """Formats the address with a prefix and checksum."""
+    """Formats the address with a prefix and checksum"""
     if not hash_bytes:
         raise ValueError("Hash bytes cannot be empty") #
 
@@ -108,7 +108,7 @@ def _format_with_prefix(hash_bytes: bytes, prefix: str) -> str:
     return prefix + base58.b58encode(address[len(prefix):]).decode()
 
 def _format_with_checksum(hash_bytes: bytes, prefix: bytes) -> str:
-    """Formats the address with a checksum."""
+    """Formats the address with a checksum"""
     if not hash_bytes:
         raise ValueError("Hash bytes cannot be empty") #
 
@@ -118,7 +118,7 @@ def _format_with_checksum(hash_bytes: bytes, prefix: bytes) -> str:
     return base58.b58encode(address).decode()
 
 def _calculate_checksum(data: bytes) -> bytes:
-    """Calculates a double SHA-256 checksum."""
+    """Calculates a double SHA-256 checksum"""
     checksum = hashlib.sha256(data).digest()
     return hashlib.sha256(checksum).digest()[:4]
 
@@ -157,7 +157,7 @@ def format_big_amount(amount: Union[int, Decimal], precision: int) -> str:
 
 def validate_precision(precision: int):
     if precision > 1000:
-        raise ValueError("Precision is unreasonably large.")
+        raise ValueError("Precision is unreasonably large")
 
 def format_key_page_url(key_book_url: str, page_index: int) -> str:
     if page_index < 0:

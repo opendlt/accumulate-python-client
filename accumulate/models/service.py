@@ -10,8 +10,8 @@ class ServiceAddress:
     """
     Represents a service address with type and argument.
     """
-    service_type: int  # Type of the service, represented as an integer.
-    argument: Optional[str] = None  # Optional argument for the service.
+    service_type: int  # Type of the service, represented as an integer
+    argument: Optional[str] = None  # Optional argument for the service
 
     @property
     def type(self) -> int:
@@ -82,21 +82,28 @@ class FindServiceOptions:
     """
     Represents options for finding a service in the Accumulate network.
     """
-    network: str  # The network name
-    service: Optional[ServiceAddress] = None  # The service address to search for
+    network: str  # network name
+    service: Optional[ServiceAddress] = None  # service address to search for
     known: Optional[bool] = None  # Restrict results to known peers
-    timeout: Optional[timedelta] = None  # The timeout for querying the DHT
+    timeout: Optional[timedelta] = None  #  timeout for querying the DHT
 
     def to_dict(self) -> dict:
         """
         Serialize a FindServiceOptions object into a dictionary.
+        Removes `timeout` if it is None to prevent JSON-RPC errors.
         """
-        return {
+        params = {
             "network": self.network,
             "service": self.service.to_dict() if self.service else None,
             "known": self.known,
-            "timeout": self.timeout.total_seconds() if self.timeout else None,
         }
+
+        # Only include timeout if it is set
+        if self.timeout is not None:
+            params["timeout"] = self.timeout.total_seconds()
+
+        return params
+
 
     @classmethod
     def from_dict(cls, data: dict) -> "FindServiceOptions":
@@ -116,9 +123,9 @@ class FindServiceResult:
     """
     Represents the result of a service search in the Accumulate network.
     """
-    peer_id: str  # The unique ID of the peer providing the service
-    status: str  # The status of the known peer
-    addresses: List[str]  # A list of addresses associated with the service
+    peer_id: str  # unique ID of the peer providing the service
+    status: str  # status of the known peer
+    addresses: List[str]  # list of addresses associated with the service
 
     def to_dict(self) -> dict:
         """

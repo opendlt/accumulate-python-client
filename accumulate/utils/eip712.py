@@ -134,10 +134,10 @@ def create_eip712_message(
 
 def eth_chain_id(network_name: str) -> int:
     """
-    Returns the Ethereum chain ID for an Accumulate network name.
+    Returns the Ethereum chain ID for an Accumulate network name
 
-    :param network_name: The name of the network (e.g., "mainnet").
-    :return: The Ethereum chain ID.
+    :param network_name: The name of the network (e.g., "mainnet")
+    :return: The Ethereum chain ID
     """
     if network_name.lower() == "mainnet":
         return 281  # 0x119
@@ -150,11 +150,11 @@ def eth_chain_id(network_name: str) -> int:
 
 def marshal_eip712(transaction: Dict[str, Any], signature: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Creates the EIP-712 JSON message for a transaction and signature.
+    Creates the EIP-712 JSON message for a transaction and signature
 
-    :param transaction: The transaction object.
-    :param signature: The signature object.
-    :return: Serialized EIP-712 JSON message.
+    :param transaction: The transaction object
+    :param signature: The signature object
+    :return: Serialized EIP-712 JSON message
     """
     serialized_tx = {
         "header": transaction.get("header", {}),
@@ -171,11 +171,11 @@ def marshal_eip712(transaction: Dict[str, Any], signature: Dict[str, Any]) -> Di
 
 def hash_eip712(transaction: Dict[str, Any], signature: Dict[str, Any]) -> bytes:
     """
-    Hashes an EIP-712 transaction and signature.
+    Hashes an EIP-712 transaction and signature
 
-    :param transaction: The transaction object.
-    :param signature: The signature object.
-    :return: SHA-256 hash of the EIP-712 message.
+    :param transaction: The transaction object
+    :param signature: The signature object
+    :return: SHA-256 hash of the EIP-712 message
     """
     eip712_message = marshal_eip712(transaction, signature)
     eip712_json = json.dumps(eip712_message, separators=(',', ':')).encode()

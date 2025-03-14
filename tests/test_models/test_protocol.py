@@ -19,14 +19,13 @@ from accumulate.models.protocol import (
 )
 from accumulate.utils.hash_functions import LiteAuthorityForKey, LiteAuthorityForHash
 from accumulate.utils.encoding import (
-    marshal_uint,
-    unmarshal_uint,
-    marshal_string,
+    encode_uvarint,
+    decode_uvarint,
+    string_marshal_binary,
     unmarshal_string,
-    duration_to_json,
-    duration_from_json,
 )
 from accumulate.utils.url import URL, WrongSchemeError
+import io
 import logging
 
 class TestProtocol(unittest.TestCase):
@@ -84,7 +83,6 @@ class TestProtocol(unittest.TestCase):
         result = lite_token_address(pub_key, lite_token_url)
         self.assertIsInstance(result, URL)
 
-
     def test_lite_token_address_invalid_token_url(self):
         """Test generating lite token account URL with invalid token URL."""
         pub_key = b"test_public_key"
@@ -98,9 +96,6 @@ class TestProtocol(unittest.TestCase):
         self.assertIn("Invalid token URL", str(context.exception))
         self.assertIn("Missing path or invalid identity format", str(context.exception))
 
-
-
-
     def test_url_parse_invalid_format(self):
         """Test parsing an invalid URL format."""
         invalid_url = "invalid_url_without_proper_format"
@@ -110,7 +105,6 @@ class TestProtocol(unittest.TestCase):
 
         self.assertIn("Wrong scheme in URL", str(context.exception))
         self.logger.debug(f"Exception raised as expected: {context.exception}")
-
 
     def test_account_with_tokens_operations(self):
         """Test token account operations."""
@@ -185,29 +179,23 @@ class TestProtocol(unittest.TestCase):
         """Test generating lite authority for a key hash."""
         key_hash = sha256(b"test_key").digest()
         authority = LiteAuthorityForHash(key_hash)
-        self.assertTrue(len(authority), 40 + 8)  # Key hash + checksum length
+        self.assertEqual(len(authority), 40 + 8)  # Key hash (40 hex chars) + checksum (8 hex chars)
 
     def test_marshal_and_unmarshal_uint(self):
-        """Test marshaling and unmarshaling of unsigned integers."""
+        """Test encoding and decoding of unsigned integers."""
         value = 12345
-        marshaled = marshal_uint(value)
-        unmarshaled = unmarshal_uint(marshaled)
+        marshaled = encode_uvarint(value)
+        unmarshaled, _ = decode_uvarint(marshaled)
         self.assertEqual(value, unmarshaled)
 
     def test_marshal_and_unmarshal_string(self):
-        """Test marshaling and unmarshaling of strings."""
+        """Test encoding and decoding of strings."""
         value = "test_string"
-        marshaled = marshal_string(value)
-        unmarshaled = unmarshal_string(marshaled)
+        marshaled = string_marshal_binary(value)
+        # Wrap the bytes in a BytesIO for reading
+        reader = io.BytesIO(marshaled)
+        unmarshaled = unmarshal_string(reader)
         self.assertEqual(value, unmarshaled)
-
-    def test_duration_to_and_from_json(self):
-        """Test duration serialization and deserialization."""
-        duration = timedelta(seconds=123, microseconds=456000)
-        json_data = duration_to_json(duration)
-        recreated = duration_from_json(json_data)
-        self.assertEqual(duration, recreated)
-
 
 if __name__ == "__main__":
     unittest.main()

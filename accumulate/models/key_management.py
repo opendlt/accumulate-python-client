@@ -3,6 +3,8 @@
 from typing import List, Optional, Tuple
 from dataclasses import dataclass, field
 
+from accumulate.utils.encoding import field_marshal_binary, read_uvarint, unmarshal_bytes, unmarshal_string
+
 
 @dataclass
 class KeySpec:
@@ -91,24 +93,36 @@ class KeySpecParams:
     delegate: Optional[str] = None
 
     def marshal(self) -> bytes:
-        """Serialize the KeySpecParams to bytes."""
-        key_hash_length = len(self.key_hash).to_bytes(2, "big")
-        delegate_data = self.delegate.encode("utf-8") if self.delegate else b""
-        delegate_length = len(delegate_data).to_bytes(2, "big")
-        return key_hash_length + self.key_hash + delegate_length + delegate_data
+        """Serialize the KeySpecParams to bytes correctly."""
+        key_hash_data = field_marshal_binary(1, field_marshal_binary(0x20, self.key_hash))  #  keyHash encoding with `0x20`
+        
+        delegate_data = b""
+        if self.delegate:
+            delegate_data = field_marshal_binary(2, self.delegate.encode("utf-8"))
+
+        return key_hash_data + delegate_data  #  Concatenating
 
     @classmethod
     def unmarshal(cls, data: bytes) -> "KeySpecParams":
-        """Deserialize bytes into a KeySpecParams instance."""
-        key_hash_length = int.from_bytes(data[:2], "big")
-        key_hash = data[2:2 + key_hash_length]
-        delegate_length = int.from_bytes(data[2 + key_hash_length:4 + key_hash_length], "big")
-        delegate = (
-            data[4 + key_hash_length:4 + key_hash_length + delegate_length].decode("utf-8")
-            if delegate_length > 0
-            else None
-        )
+        """Deserialize bytes into a KeySpecParams instance using field-based encoding."""
+        reader = io.BytesIO(data)
+
+        key_hash = None
+        delegate = None
+
+        while reader.tell() < len(data):  #  Process all fields
+            field_number = read_uvarint(reader)  #  Read the field number
+            if field_number == 1:  #  Key Hash
+                key_hash = unmarshal_bytes(reader)
+            elif field_number == 2:  #  Delegate (if present)
+                delegate = unmarshal_string(reader)
+
+        if key_hash is None:
+            raise ValueError(" Missing key_hash in KeySpecParams deserialization!")
+
         return cls(key_hash=key_hash, delegate=delegate)
+
+
 
 # Key Page Operations
 @dataclass

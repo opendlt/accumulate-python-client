@@ -7,6 +7,7 @@ pycryptodome==3.17.0  # RSA key management and signing
 cryptography==44.0.0  # Modern cryptographic library for hashing and key management
 bitcoin==1.1.42
 base58==2.1.1
+PyNaC==1.5.0
 
 # WebSocket Communication
 websockets==10.4  # WebSocket protocol support
@@ -38,6 +39,11 @@ pytest-mock==3.11.1  # Mocking support for testing
 pytest-cov==6.0.0 # Test coverage reports
 tiktoken==0.8.0 # BPE tokeniser
 coverage==7.6.10
+
+# DOcumentation
+mkdocs 
+mkdocs-material 
+mkdocstrings[python]
 
 # Logging and Debugging Tools, testing
 loguru==0.7.0  # Advanced logging for debug information

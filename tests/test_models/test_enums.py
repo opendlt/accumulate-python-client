@@ -114,7 +114,7 @@ def test_key_page_operation_type_enum():
     assert KeyPageOperationType.UNKNOWN.value == 0
     assert KeyPageOperationType.ADD.value == 3
     assert KeyPageOperationType.REMOVE.value == 2
-    assert KeyPageOperationType.SET_THRESHOLD.value == 4
+    assert KeyPageOperationType.SET_THRESHOLD.value == 15
 
 
 def test_account_auth_operation_type_enum():

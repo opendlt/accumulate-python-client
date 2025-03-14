@@ -1,22 +1,28 @@
 # accumulate-python-client\tests\test_models\test_base_transactions.py
 
+# accumulate-python-client/tests/test_models/test_base_transactions.py
+
 from typing import Any
 import unittest
 from unittest.mock import Mock, patch
 from accumulate.models.base_transactions import (
-    TransactionBody,
+    TransactionBodyBase,
     TransactionHeader,
     ExpireOptions,
     HoldUntilOptions,
 )
 from accumulate.models.enums import TransactionType
-
+from accumulate.models.signature_types import SignatureType  # New import for required param
 
 class TestTransactionBody(unittest.TestCase):
     def test_transaction_body_abstract_methods(self):
-        class DummyTransactionBody(TransactionBody):
+        class DummyTransactionBody(TransactionBodyBase):
             def type(self) -> TransactionType:
                 return TransactionType.SEND_TOKENS
+
+            def fields_to_encode(self):
+                # For testing, we return an empty list (or you could return dummy fields)
+                return []
 
             def marshal(self) -> bytes:
                 return b"dummy"
@@ -31,7 +37,7 @@ class TestTransactionBody(unittest.TestCase):
 
     def test_transaction_body_cannot_instantiate_directly(self):
         with self.assertRaises(TypeError):
-            TransactionBody()
+            TransactionBodyBase()
 
 
 class TestTransactionHeader(unittest.TestCase):
@@ -44,9 +50,15 @@ class TestTransactionHeader(unittest.TestCase):
         self.hold_until = Mock(spec=HoldUntilOptions)
         self.authorities = ["acc://auth1", "acc://auth2"]
 
+        # Provide required timestamp and signature_type
+        self.timestamp = 1234567890
+        self.signature_type = SignatureType.ED25519  # adjust as needed
+
         self.header = TransactionHeader(
             principal=self.principal,
             initiator=self.initiator,
+            timestamp=self.timestamp,
+            signature_type=self.signature_type,
             memo=self.memo,
             metadata=self.metadata,
             expire=self.expire,
@@ -62,15 +74,23 @@ class TestTransactionHeader(unittest.TestCase):
         self.assertEqual(self.header.expire, self.expire)
         self.assertEqual(self.header.hold_until, self.hold_until)
         self.assertEqual(self.header.authorities, self.authorities)
+        self.assertEqual(self.header.timestamp, self.timestamp)
+        self.assertEqual(self.header.signature_type, self.signature_type)
 
     def test_default_values(self):
-        header = TransactionHeader(principal=self.principal)
-        self.assertIsNone(header.initiator)
-        self.assertIsNone(header.memo)
-        self.assertIsNone(header.metadata)
-        self.assertIsNone(header.expire)
-        self.assertIsNone(header.hold_until)
-        self.assertEqual(header.authorities, [])
+        # When only principal is provided, supply default timestamp and signature_type
+        default_header = TransactionHeader(
+            principal=self.principal,
+            initiator=None,
+            timestamp=0,
+            signature_type=SignatureType.UNKNOWN,  # assuming UNKNOWN exists in your enum
+        )
+        self.assertIsNone(default_header.initiator)
+        self.assertIsNone(default_header.memo)
+        self.assertIsNone(default_header.metadata)
+        self.assertIsNone(default_header.expire)
+        self.assertIsNone(default_header.hold_until)
+        self.assertEqual(default_header.authorities, [])
 
     @patch("accumulate.models.base_transactions.TransactionHeader.marshal_binary")
     def test_marshal_binary(self, mock_marshal):

@@ -6,6 +6,7 @@ from accumulate.models.responses import SubmissionResponse, TransactionResultSet
 from accumulate.models.protocol import Receipt
 from accumulate.models.transactions import TransactionStatus
 import logging
+import re
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -13,21 +14,27 @@ logger = logging.getLogger(__name__)
 
 class TestSubmissionResponse(unittest.TestCase):
     def setUp(self):
-        # Patch TransactionStatus
-        self.patcher_status = patch('accumulate.models.transactions.TransactionStatus')
+        # Patch TransactionStatus where it is used in the responses module.
+        self.patcher_status = patch('accumulate.models.responses.TransactionStatus')
         self.MockTransactionStatus = self.patcher_status.start()
         self.addCleanup(self.patcher_status.stop)
 
-        # Patch Receipt
+        # Patch Receipt from the protocol module.
         self.patcher_receipt = patch('accumulate.models.protocol.Receipt')
         self.MockReceipt = self.patcher_receipt.start()
         self.addCleanup(self.patcher_receipt.stop)
 
-        # Update mocks to handle data alignment
-        self.MockTransactionStatus.from_dict.side_effect = lambda data: MagicMock(
-            to_dict=lambda: data
-        )
+        # Define a fake from_dict for TransactionStatus that returns a mock with to_dict() returning the input data.
+        def fake_ts_from_dict(data):
+            mock_ts = MagicMock()
+            mock_ts.to_dict.return_value = data
+            return mock_ts
+        self.MockTransactionStatus.from_dict.side_effect = fake_ts_from_dict
+
+        # Define a fake from_dict for Receipt that creates a Receipt instance using the provided data.
         self.MockReceipt.from_dict.side_effect = lambda data: Receipt(**data)
+
+
 
     def test_submission_response_default_initialization(self):
         """Test initializing SubmissionResponse with default values."""
@@ -105,20 +112,26 @@ class TestSubmissionResponse(unittest.TestCase):
 
 class TestTransactionResultSet(unittest.TestCase):
     def setUp(self):
-        # Patch TransactionStatus
-        self.patcher_status = patch('accumulate.models.transactions.TransactionStatus')
+        # Patch TransactionStatus where it is used in the responses module.
+        self.patcher_status = patch('accumulate.models.responses.TransactionStatus')
         self.MockTransactionStatus = self.patcher_status.start()
         self.addCleanup(self.patcher_status.stop)
 
-        # Update mock to handle data alignment
-        self.MockTransactionStatus.from_dict.side_effect = lambda data: TransactionStatus(
-            tx_id=data.get("tx_id"),
-            code=data.get("code", 0),
-            error=data.get("error"),
-            result=data.get("result"),
-            received=data.get("received"),
-            initiator=data.get("initiator"),
-        )
+        # Use a custom fake from_dict that creates a TransactionStatus instance without the 'signers' keyword,
+        # then assigns the signers attribute afterward.
+        def fake_ts_from_dict(data):
+            ts = TransactionStatus(
+                tx_id=data.get("tx_id"),
+                code=data.get("code", 0),
+                error=data.get("error"),
+                result=data.get("result"),
+                received=data.get("received"),
+                initiator=data.get("initiator")
+            )
+            ts.signers = data.get("signers", [])
+            return ts
+        self.MockTransactionStatus.from_dict.side_effect = fake_ts_from_dict
+
 
     def test_transaction_result_set_default_initialization(self):
         """Test initializing TransactionResultSet with default values."""

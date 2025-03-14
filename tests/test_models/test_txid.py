@@ -29,17 +29,17 @@ def test_txid_initialization_invalid_hash():
         TxID(url, b"short-hash")
 
 
-
-
 def test_txid_parse_valid():
     """Test parsing a valid TxID."""
     txid_str = "acc://509e263b5b7c17a1f8b8a8a02a3e925b3abc448f3a5be6d5c3a1de3c64bb1aec@staking.acme/tokens"
     txid = TxID.parse(txid_str)
 
-    assert txid.url.authority == "staking.acme"
+    # Note: The new URL parsing retains the scheme in authority.
+    assert txid.url.authority == "acc://staking.acme"
     assert txid.url.user_info == ""  # user_info should be removed in the clean URL
     assert txid.tx_hash == bytes.fromhex("509e263b5b7c17a1f8b8a8a02a3e925b3abc448f3a5be6d5c3a1de3c64bb1aec")
     assert txid.url.path == "/tokens"
+
 
 def test_txid_parse_missing_hash():
     """Test TxID missing the TxHash."""
@@ -63,7 +63,6 @@ def test_txid_parse_invalid_hash():
     try:
         TxID.parse(txid_str)
     except (InvalidHashError, ValueError) as e:
-        # Adjusted regex to match the actual error message
         assert re.match(r"Invalid transaction hash format.*", str(e))
     else:
         pytest.fail("Expected InvalidHashError or ValueError but no exception was raised.")
@@ -75,11 +74,13 @@ def test_txid_parse_missing_at():
     with pytest.raises(ValueError, match=r"Invalid TxID structure: .*"):
         TxID.parse(txid_str)
 
+
 def test_txid_parse_invalid_url_ending_with_at():
     """Test parsing a URL that ends with '@'."""
     txid_str = "acc://staking.acme@"
     with pytest.raises(MissingHashError, match=r"TxID missing hash: acc://staking.acme@"):
         TxID.parse(txid_str)
+
 
 def test_txid_parse_invalid_domain():
     """Test TxID with an invalid domain ending with .com."""
@@ -115,6 +116,7 @@ def test_txid_account():
     txid = TxID(url, tx_hash)
 
     assert txid.account() == url
+
 
 def test_txid_compare():
     """Test lexicographical comparison of two TxIDs."""
@@ -162,7 +164,8 @@ def test_txid_str():
     tx_hash = bytes.fromhex("00" * 32)
     txid = TxID(url, tx_hash)
 
-    expected_str = f"staking.acme/path@{tx_hash.hex()}"
+    expected_str = f"{str(url)}@{tx_hash.hex()}"
+    # This now expects the full URL with scheme in the authority.
     assert str(txid) == expected_str
 
 
@@ -173,7 +176,7 @@ def test_txid_json():
     txid = TxID(url, tx_hash)
 
     json_str = txid.json()
-    expected_json = '{"url": "staking.acme/path", "hash": "0000000000000000000000000000000000000000000000000000000000000000"}'
+    expected_json = '{"url": "acc://staking.acme/path", "hash": "0000000000000000000000000000000000000000000000000000000000000000"}'
     assert json_str == expected_json
 
 
@@ -184,3 +187,4 @@ def test_txid_from_json():
 
     assert txid.url == URL.parse("acc://staking.acme/path")
     assert txid.tx_hash == bytes.fromhex("00" * 32)
+

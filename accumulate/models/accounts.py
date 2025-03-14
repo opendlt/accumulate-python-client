@@ -3,7 +3,6 @@
 from typing import Optional, List, Tuple, Any
 from decimal import Decimal
 from hashlib import sha256
-from accumulate.models.data_entries import DataEntry
 from accumulate.models.key_management import KeySpec
 from accumulate.utils.union import UnionValue
 from accumulate.utils.url import URL
@@ -104,7 +103,7 @@ class LiteIdentity(Account):
         print(f"[DEBUG] Calculated key_hash[:20]: {key_hash[:20].hex()}")
         print(f"[DEBUG] Derived lite_key: {lite_key.hex()}")
 
-        if lite_key == key_hash[:20]:  # Ensure the comparison logic is correct
+        if lite_key == key_hash[:20]:
             print(f"[DEBUG] Key match successful.")
             return 0, self, True
 
@@ -123,7 +122,6 @@ class LiteIdentity(Account):
             f"credit_balance={self.credit_balance}, "
             f"last_used_on={self.last_used_on}>"
         )
-
 
 
 class LiteTokenAccount(Account):
@@ -172,7 +170,6 @@ class LiteTokenAccount(Account):
         return True
 
 
-
 class ADI(FullAccount):
     def __init__(self, url: Any, account_auth: Optional['AccountAuth'] = None):
         super().__init__(account_auth)
@@ -190,15 +187,27 @@ class ADI(FullAccount):
     def strip_url(self) -> None:
         self.url = self.url.strip_extras()
 
+
 class DataAccount(FullAccount):
     def __init__(self, url: Any, account_auth: Optional['AccountAuth'] = None, entry: Optional['DataEntry'] = None):
         super().__init__(account_auth)
         self.url = self._ensure_url(url)
-        self.entry = entry
+        self._entry = entry  # Use a private variable for lazy loading
+
+    @property
+    def entry(self):
+        if isinstance(self._entry, str) or self._entry is None:  # Lazy import condition
+            from accumulate.models.data_entries import DataEntry  # Lazy import here
+            self._entry = DataEntry()  # Instantiate DataEntry (modify as needed)
+        return self._entry
+
+    @entry.setter
+    def entry(self, value):
+        self._entry = value
 
     def _ensure_url(self, url: Any) -> Any:
         if isinstance(url, str):
-            from accumulate.utils.url import URL
+            from accumulate.utils.url import URL  # Lazy import inside the function
             return URL.parse(url)
         return url
 

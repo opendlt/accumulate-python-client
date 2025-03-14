@@ -1,0 +1,31 @@
+site_name: Accumulate Python Client
+repo_url: https://github.com/opendlt/accumulate-python-client
+theme:
+  name: material
+  palette:
+    primary: 'blue'
+    accent: 'cyan'
+markdown_extensions:
+  - admonition
+  - codehilite
+  - toc:
+      permalink: true
+  - pymdownx.superfences
+  - pymdownx.details
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_root_heading: true
+            show_source: true
+            show_root_full_path: false
+            show_if_no_docstring: false
+nav:
+  - Home: index.md
+  - Getting Started: getting_started.md
+  - API Reference: api_reference.md
+  - Examples: examples.md
+  - Contributing: contributing.md
+  - Changelog: changelog.md

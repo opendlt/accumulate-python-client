@@ -39,11 +39,11 @@ def wrong_scheme(url: str) -> WrongSchemeError:
 
 
 def missing_hash(url: str) -> MissingHashError:
-    return MissingHashError(f"{url} is not a transaction ID: Missing hash.")
+    return MissingHashError(f"{url} is not a transaction ID: Missing hash.") #
 
 
 def invalid_hash(url: str, error_details: Any) -> InvalidHashError:
-    return InvalidHashError(f"{url} is not a transaction ID: Invalid hash. Details: {error_details}")
+    return InvalidHashError(f"{url} is not a transaction ID: Invalid hash. Details: {error_details}") #
 
 
 class URL:
@@ -106,17 +106,17 @@ class URL:
 
         # Verify scheme consistency
         if parsed.scheme != "acc":
-            print(f"ERROR: Invalid scheme detected after parsing. Found: {parsed.scheme}, Expected: 'acc'")
             raise wrong_scheme(url_str)
 
         # Ensure a valid netloc (authority)
         if not parsed.netloc:
             print(f"ERROR: Parsed URL missing authority component. URL: {url_str}, netloc: {parsed.netloc}")
-            raise missing_host(url_str)
+            raise ValueError("Invalid URL: Authority cannot be empty.")
 
         # Validate and handle user_info and authority
         user_info, authority = "", parsed.netloc
         print(f"DEBUG: Initial netloc value: {parsed.netloc}")
+
         if "@" in parsed.netloc:
             print(f"DEBUG: '@' character found in netloc. Splitting into user_info and authority.")
             parts = parsed.netloc.split("@", 1)
@@ -130,7 +130,6 @@ class URL:
 
         # Ensure the authority is not empty
         if not authority:
-            print(f"ERROR: Empty authority component detected in URL: {url_str}")
             raise ValueError("Invalid URL: Authority cannot be empty.")
 
         # Reject .com domains in the authority
@@ -138,22 +137,26 @@ class URL:
             print(f"ERROR: Authority ends with '.com', which is not allowed: {authority}")
             raise ValueError(f"Invalid authority domain: {authority}. Domains ending with '.com' are not allowed.")
 
+        #  Carefully ensure the authority **ALWAYS** starts with `acc://` but **DO NOT** duplicate it
+        if not authority.startswith("acc://"):
+            authority = f"acc://{authority}"
+
         print(f"DEBUG: Finalized components - user_info: {user_info}, authority: {authority}, path: {parsed.path}, query: {parsed.query}, fragment: {parsed.fragment}")
 
         return URL(
             user_info=user_info,
-            authority=authority,
+            authority=authority,  #  Always ensures "acc://" is part of authority
             path=parsed.path,
             query=parsed.query,
             fragment=parsed.fragment,
         )
 
 
-
     def marshal(self) -> bytes:
         url_str = f"acc://{self.user_info + '@' if self.user_info else ''}{self.authority}{self.path or ''}"
         print(f"DEBUG: Marshaling URL to string: {url_str}")
         return url_str.encode('utf-8')
+
 
     @staticmethod
     def unmarshal(data: bytes) -> "URL":
@@ -164,27 +167,43 @@ class URL:
     def __str__(self) -> str:
         if self._str_cache is None:
             components = []
+
+            #  Preserve user_info if present
             if self.user_info:
-                components.append(self.user_info)
-            if self.authority:
-                components.append(self.authority.replace("acc://", "", 1))
+                components.append(self.user_info + "@")
+
+            #  Ensure authority **always** starts with "acc://", but avoid duplication
+            authority = self.authority
+            if not authority.startswith("acc://"):
+                authority = f"acc://{authority}"
+
+            components.append(authority)
+
+            #  Append path if present
             if self.path:
                 components.append(self.path)
+
+            #  Append query if present
             if self.query:
                 components.append(f"?{self.query}")
+
+            #  Append fragment if present
             if self.fragment:
                 components.append(f"#{self.fragment}")
 
+            #  Construct final URL string and cache it
             self._str_cache = "".join(components)
+
         return self._str_cache
+
 
 
     def is_key_page_url(self) -> bool:
         """Check if the URL represents a valid key page."""
-        path_parts = self.path.strip("/").split("/")
-        if len(path_parts) == 3 and path_parts[-1].isdigit():
-            return True
-        return False
+        path_parts = self.path.strip("/").split("/") #
+        if len(path_parts) == 3 and path_parts[-1].isdigit(): #
+            return True #
+        return False #
 
 
     def __eq__(self, other: Any) -> bool:
@@ -213,12 +232,17 @@ class URL:
 
     def root_identity(self) -> "URL":
         """Return the root identity (authority only)."""
-        return URL(authority=self.authority)
+        return URL(authority=self.authority) #
 
     def identity(self) -> "URL":
-        """Return the identity (parent path)."""
-        parent_path = self.path.rsplit("/", 1)[0]
-        return URL(authority=self.authority, path=parent_path)
+        """Return the Accumulate Digital Identity (ADI), which is the root authority."""
+        print(f"DEBUG: Original path: {self.path}")
+
+        # The ADI is just the authority, no path.
+        result = URL(authority=self.authority, path="")
+
+        print(f"DEBUG: Returning identity URL: {result.authority} with path: {result.path}")
+        return result
 
     def account_id(self) -> bytes:
         """Generate the Account ID hash."""
@@ -246,4 +270,12 @@ class URL:
     def valid_utf8(self) -> bool:
         """Validate that all components are UTF-8."""
         components = [self.user_info, self.authority, self.path, self.query, self.fragment]
-        return all((comp.encode("utf-8", "strict") if comp else True) for comp in components)
+        
+        try:
+            for comp in components:
+                if comp:
+                    comp.encode("utf-8", "strict")
+            return True
+        except UnicodeEncodeError:
+            return False
+

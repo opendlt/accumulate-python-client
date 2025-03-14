@@ -3,14 +3,20 @@
 from enum import Enum
 from typing import Optional
 
-# Service Types
 class ServiceType(Enum):
-    """Types of services available in the Accumulate network."""
-    UNKNOWN = 0
-    QUERY = 5
-    EVENT = 6
-    SUBMIT = 7
-    FAUCET = 9
+    """Types of services available in the Accumulate network, using hexadecimal values."""
+    UNKNOWN = 0x00  # Indicates an unknown service type
+    NODE = 0x01  # Node service
+    CONSENSUS = 0x02  # Consensus service
+    NETWORK = 0x03  # Network service
+    METRICS = 0x04  # Metrics service
+    QUERY = 0x05  # Querier service
+    EVENT = 0x06  # Event service
+    SUBMIT = 0x07  # Submitter service
+    VALIDATE = 0x08  # Validator service
+    FAUCET = 0x09  # Faucet service
+    SNAPSHOT = 0x0A  # Snapshot service
+
 
 # Querier type mapping
 EVENT_TYPE_MAPPING = {
@@ -34,7 +40,31 @@ class QueryType(Enum):
     DELEGATE_SEARCH = 0x13
     MESSAGE_HASH_SEARCH = 0x14
 
+    @classmethod
+    def from_value(cls, value):
+        """Retrieve an enum instance by its numeric value."""
+        for item in cls:
+            if item.value == value:
+                return item
+        raise ValueError(f"Invalid QueryType value: {value}")
 
+    def to_rpc_format(self) -> str:
+        """Convert to the expected JSON-RPC queryType format (camelCase)."""
+        mapping = {
+            "DEFAULT": "default",
+            "CHAIN": "chain",
+            "DATA": "data",
+            "DIRECTORY": "directory",
+            "PENDING": "pending",
+            "BLOCK": "block",
+            "ANCHOR_SEARCH": "anchor",
+            "PUBLIC_KEY_SEARCH": "publicKeySearch",
+            "PUBLIC_KEY_HASH_SEARCH": "publicKeyHashSearch",
+            "DELEGATE_SEARCH": "delegateSearch",
+            "MESSAGE_HASH_SEARCH": "messageHashSearch",
+        }
+        return mapping[self.name]
+    
 # Record Types
 class RecordType(Enum):
     """Types of records stored in the blockchain."""
@@ -100,10 +130,10 @@ class VoteType(Enum):
 # Data Entry Types
 class DataEntryType(Enum):
     """Types of data entries in the blockchain."""
-    UNKNOWN = 0
-    FACTOM = 1
-    ACCUMULATE = 2
-    DOUBLE_HASH = 3
+    UNKNOWN = 0x00
+    FACTOM = 0x01
+    ACCUMULATE = 0x02
+    DOUBLE_HASH = 0x03
 
 class TransactionType(Enum):
     """Transaction types supported by the Accumulate blockchain."""
@@ -161,14 +191,18 @@ class TransactionType(Enum):
         return self in {TransactionType.DIRECTORY_ANCHOR, TransactionType.BLOCK_VALIDATOR_ANCHOR}
 
 
+
 # Key Page Operations
 class KeyPageOperationType(Enum):
     """Operations for key pages."""
     UNKNOWN = 0
-    ADD = 3
-    REMOVE = 2
     UPDATE = 1
-    SET_THRESHOLD = 4
+    REMOVE = 2
+    ADD = 3
+    SET_THRESHOLD = 15
+    UPDATE_ALLOWED = 5
+    SET_REJECT_THRESHOLD = 6
+    SET_RESPONSE_THRESHOLD = 7
 
 
 # Account Authorization Operations

@@ -3,38 +3,45 @@
 import hashlib
 import base58
 from typing import Union
-from .validation import ValidationError
+from accumulate.models.errors import ValidationError
 from accumulate.models.signatures import PublicKeyHash, PrivateKey, Lite
-
-
-
+import re
 
 def parse(address: str) -> Union[PublicKeyHash, PrivateKey, Lite]:
     # Check for short addresses
     if len(address) < 4:
-        raise ValidationError("Unknown address format")  # Standardized error message
+        raise ValidationError("Unknown address format")  
 
     # Specific address parsers
     if address.startswith("acc://"):
         return parse_lite(address)
 
     prefix = address[:2]
-    if prefix == "AC":
-        return parse_ac_address(address)
-    elif prefix == "AS":
-        return parse_as_address(address)
-    elif prefix == "FA":
-        return parse_fa_address(address)
-    elif prefix == "Fs":
-        return parse_fs_address(address)
-    elif prefix == "BT":
-        return parse_btc_address(address)
-    elif prefix == "0x":
-        return parse_eth_address(address)
-    elif prefix == "MH":
-        return parse_mh_address(address)
-    elif is_wif_key(address):
-        return parse_wif(address)
+    try:
+        if prefix == "AC":
+            return parse_ac_address(address)
+        elif prefix == "AS":
+            return parse_as_address(address)
+        elif prefix == "FA":
+            return parse_fa_address(address)
+        elif prefix == "Fs":
+            return parse_fs_address(address)
+        elif prefix == "BT":
+            return parse_btc_address(address)
+        elif prefix == "0x" and len(address) == 42:  # 20-byte ETH addresses
+            return parse_eth_address(address)
+        elif prefix == "0x" and len(address) > 42:  # Longer hex gets parsed normally
+            return parse_hex_or_base58(address)
+        elif prefix == "MH":
+            return parse_mh_address(address)
+        elif is_wif_key(address):
+            return parse_wif(address)
+    except ValidationError as e:
+        raise e
+
+    #  Allow raw hexadecimal strings (ensure only valid hex characters)
+    if re.fullmatch(r"[0-9a-fA-F]+", address) and len(address) >= 8:
+        return parse_hex_or_base58(address)
 
     # Reject clearly invalid formats
     if len(address.strip()) == 0 or not any(c.isalnum() for c in address):
@@ -50,11 +57,6 @@ def parse(address: str) -> Union[PublicKeyHash, PrivateKey, Lite]:
         return parse_hex_or_base58(address)
     except ValidationError:
         raise ValidationError("Unknown address format")
-
-
-
-
-
 
 # Address Type Parsers
 def parse_ac_address(address: str) -> PublicKeyHash:
@@ -91,7 +93,7 @@ def parse_as_address(address: str) -> PrivateKey:
 def parse_fa_address(address: str) -> PublicKeyHash:
     """Parse a Factom public key (FA) address."""
     # Strip the readable prefix before decoding
-    if not address.startswith("FA"):
+    if not address.startswith("FA"):  # This condition ensures the prefix validation
         raise ValidationError("Invalid FA address prefix")
     encoded_payload = address[2:]  # Remove the "FA" prefix
     hash_bytes = parse_with_checksum(encoded_payload, 32, b"\x5f\xb1")
@@ -102,7 +104,7 @@ def parse_fs_address(address: str) -> PrivateKey:
     """Parse a Factom private key (Fs) address."""
     # Strip the readable prefix before decoding
     if not address.startswith("Fs"):
-        raise ValidationError("Invalid Fs address prefix")
+        raise ValidationError("Invalid Fs address prefix") #
     encoded_payload = address[2:]  # Remove the "Fs" prefix
     private_key_bytes = parse_with_checksum(encoded_payload, 32, b"\x64\x78")
     return PrivateKey(private_key_bytes, "RCD1")
@@ -126,7 +128,7 @@ def parse_eth_address(address: str) -> PublicKeyHash:
         raise ValidationError("Unknown address format")  # Standardized message
 
     if len(hash_bytes) != 20:
-        raise ValidationError("Unknown address format")  # Standardized message
+        raise ValidationError("Unknown address format")  # Standardized message #
 
     return PublicKeyHash("ETH", hash_bytes)
 
@@ -139,8 +141,8 @@ def parse_mh_address(address: str) -> PublicKeyHash:
         raise ValidationError("Invalid MH address: bad prefix")
     try:
         decoded = base58.b58decode(address[2:])
-    except ValueError:
-        raise ValidationError("Invalid MH address: decoding failed")
+    except ValueError: #
+        raise ValidationError("Invalid MH address: decoding failed") #
     return PublicKeyHash("Multihash", decoded)
 
 
@@ -148,10 +150,10 @@ def parse_mh_address(address: str) -> PublicKeyHash:
 def parse_with_prefix(address: str, length: int, prefix: str) -> bytes:
     """Parse an address with a specific prefix and length."""
     if not address.startswith(prefix):
-        raise ValidationError(f"Invalid prefix for {prefix}")
+        raise ValidationError(f"Invalid prefix for {prefix}") #
     decoded = base58.b58decode(address[len(prefix):])
     if len(decoded) != length + 4:
-        raise ValidationError(f"Invalid length for {prefix} address")
+        raise ValidationError(f"Invalid length for {prefix} address") #
     checksum = decoded[-4:]
     data = decoded[:-4]
     verify_checksum(data, checksum)
@@ -173,22 +175,26 @@ def parse_with_checksum(address: str, length: int, prefix: bytes) -> bytes:
 
 def parse_hex_or_base58(address: str) -> PublicKeyHash:
     try:
-        # Attempt to decode as hexadecimal
-        decoded = bytes.fromhex(address)
+        # Strip "0x" prefix if present before decoding as hex
+        hex_address = address[2:] if address.startswith("0x") else address
+        decoded = bytes.fromhex(hex_address)
+
         if len(decoded) < 4:  # Ensure a minimum length for valid hex addresses
-            raise ValueError
+            raise ValueError  
         return PublicKeyHash("RawHex", decoded)
     except ValueError:
         pass
 
     try:
-        # Attempt to decode as Base58
+        # Decode as Base58 if not valid hex
         decoded = base58.b58decode(address)
-        if len(decoded) < 4:  # Ensure a minimum length for valid Base58 addresses
-            raise ValueError
+        if len(decoded) < 4:  
+            raise ValueError  
         return PublicKeyHash("Base58", decoded)
     except ValueError:
-        raise ValidationError("Unknown address format")
+        raise ValidationError("Invalid Hex or Base58 format")
+
+
 
 
 
@@ -201,7 +207,7 @@ def parse_wif(wif: str) -> PrivateKey:
         raise ValidationError("Invalid WIF encoding")
 
     if len(decoded) not in (37, 38):
-        raise ValidationError("Invalid WIF length")
+        raise ValidationError("Invalid WIF length") #
     key = decoded[1:33]
     compressed = len(decoded) == 38
     return PrivateKey(key if not compressed else key[:32], "BTC")
@@ -231,9 +237,9 @@ def is_wif_key(wif: str) -> bool:
     try:
         decoded = base58.b58decode(wif)
         if len(decoded) not in (37, 38):  # 32 bytes private key + 4 bytes checksum (+1 byte for compression flag)
-            return False
+            return False #
         checksum = decoded[-4:]
         expected_checksum = hashlib.sha256(hashlib.sha256(decoded[:-4]).digest()).digest()[:4]
         return checksum == expected_checksum
-    except Exception:
-        return False
+    except Exception: #
+        return False #

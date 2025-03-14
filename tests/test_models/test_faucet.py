@@ -56,13 +56,14 @@ def test_faucet_signer_set_public_key():
     )
     dummy_signature = b"dummy_signature"
     dummy_timestamp = 1234567890
+    dummy_transaction_data = b"dummy_transaction_data"
 
     # Valid signature types
     for sig_class in [ED25519Signature, LegacyED25519Signature, RCD1Signature]:
-        if sig_class == LegacyED25519Signature or sig_class == RCD1Signature:
-            sig = sig_class(dummy_signer, dummy_public_key, dummy_signature, dummy_timestamp)
+        if sig_class == ED25519Signature:
+            sig = sig_class(dummy_signer, dummy_public_key, dummy_signature, dummy_transaction_data)
         else:
-            sig = sig_class(dummy_signer, dummy_public_key, dummy_signature)
+            sig = sig_class(dummy_signer, dummy_public_key, dummy_signature, dummy_timestamp)
         signer.set_public_key(sig)
         expected_key = Faucet.FAUCET_KEY.public_key().public_bytes(
             encoding=Encoding.PEM, format=PublicFormat.SubjectPublicKeyInfo
@@ -79,8 +80,6 @@ def test_faucet_signer_set_public_key():
         signer.set_public_key(sig)
 
 
-
-
 def test_faucet_signer_sign():
     """Test signing with the FaucetSigner."""
     signer = FaucetSigner(1234567890)
@@ -92,13 +91,14 @@ def test_faucet_signer_sign():
     )
     dummy_signature = b"dummy_signature"
     dummy_timestamp = 1234567890
+    dummy_transaction_data = b"dummy_transaction_data"
 
     # Valid signature types
     for sig_class in [ED25519Signature, LegacyED25519Signature, RCD1Signature]:
-        if sig_class == LegacyED25519Signature or sig_class == RCD1Signature:
-            sig = sig_class(dummy_signer, dummy_public_key, dummy_signature, dummy_timestamp)
+        if sig_class == ED25519Signature:
+            sig = sig_class(dummy_signer, dummy_public_key, dummy_signature, dummy_transaction_data)
         else:
-            sig = sig_class(dummy_signer, dummy_public_key, dummy_signature)
+            sig = sig_class(dummy_signer, dummy_public_key, dummy_signature, dummy_timestamp)
         signer.sign(sig, sig_md_hash, message)
         expected_signature = Faucet.FAUCET_KEY.sign(message)
         assert sig.signature == expected_signature
@@ -111,7 +111,6 @@ def test_faucet_signer_sign():
     sig = UnsupportedSignature()
     with pytest.raises(ValueError, match="Cannot sign UnsupportedSignature with a key."):
         signer.sign(sig, sig_md_hash, message)
-
 
 
 def test_faucet_constants():

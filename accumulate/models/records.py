@@ -3,10 +3,13 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Type, TypeVar, Dict, Any, Generic
 from datetime import datetime
-from accumulate.api.exceptions import AccumulateError
 from accumulate.models.options import RangeOptions
 
 T = TypeVar("T", bound="Record")
+
+class AccumulateError(Exception):
+    """Base class for all custom exceptions in the Accumulate client."""
+    pass
 
 def range_of(record_range: "RecordRange", item_type: Type[T]) -> "RecordRange[T]":
     """Validate and cast a RecordRange to a specific item type."""
@@ -95,8 +98,6 @@ class RecordRange(Generic[T]):
             item_type=record_cls
         )
 
-
-
 @dataclass
 class AccountRecord(Record):
     """Represents an account record."""
@@ -120,10 +121,16 @@ class AccountRecord(Record):
         return cls(
             account=data["account"],
             directory=RecordRange.from_dict(data["directory"], UrlRecord) if data.get("directory") else None,
-            pending=RecordRange.from_dict(data["pending"], TxIDRecord) if data.get("pending") else None,
+            pending=RecordRange.from_dict(data["records"], TxIDRecord) if data.get("records") else None,
             receipt=data.get("receipt", {}),
             last_block_time=datetime.fromisoformat(data["last_block_time"]) if data.get("last_block_time") else None,
         )
+
+    @property
+    def balance(self) -> float:
+        """Convert raw balance (stored in micro-ACME) to actual ACME tokens."""
+        raw_balance = int(self.account.get("balance", 0))  # Get the raw integer balance
+        return raw_balance / 1e8  # Convert micro-ACME (1 ACME = 100,000,000 units)
 
 
 @dataclass

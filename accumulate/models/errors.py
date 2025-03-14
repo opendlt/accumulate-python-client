@@ -106,6 +106,10 @@ def raise_for_error_code(code: int, message: Optional[str] = None):
     raise exception_class(message or error_code.description)
 
 
+class ValidationError(Exception):
+    """Raised when validation fails."""
+
+
 # Example Usage
 if __name__ == "__main__":
     try:

@@ -55,19 +55,18 @@ class Unknown(Address):
         return self.value.hex()
 
 
-class PublicKeyHash(Address):
+class PublicKeyHashAddress(Address):
     """Represents an address based on a public key hash."""
 
     def __init__(self, signature_type: str, hash_value: bytes):
-        self.signature_type = signature_type
-        self.hash_value = hash_value
+        self.signature_type = signature_type #
+        self.hash_value = hash_value #
 
     def get_type(self) -> str:
         return self.signature_type
 
     def get_public_key_hash(self) -> Tuple[Optional[bytes], bool]:
-        return self.hash_value, True
-
+        return self.hash_value, True #
     def get_public_key(self) -> Tuple[Optional[bytes], bool]:
         return None, False
 

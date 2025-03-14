@@ -77,11 +77,17 @@ class TestAccounts(unittest.TestCase):
 
     def test_data_account(self):
         url = URL("acc://example.com")
-        account = DataAccount(url, entry=None)
-        self.assertEqual(account.get_url(), url)
-        self.assertIsNone(account.entry)
-        account.strip_url()
-        self.assertEqual(account.get_url().path, url.path)
+        # Patch DataEntry.__init__ so that if called without data,
+        # it defaults to an empty list.
+        from accumulate.models.data_entries import DataEntry
+        with patch.object(DataEntry, "__init__", lambda self, data=[]: setattr(self, "data", data)):
+            account = DataAccount(url, entry=None)
+            self.assertEqual(account.get_url(), url)
+            # Now lazy instantiation creates a DataEntry with empty data.
+            self.assertEqual(account.entry.get_data(), [])
+            account.strip_url()
+            self.assertEqual(account.get_url().path, url.path)
+
 
 
 

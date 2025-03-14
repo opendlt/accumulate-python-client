@@ -76,7 +76,7 @@ from .signatures import (
 
 # Imports from base_transactions.py
 from .base_transactions import (
-    TransactionBody,
+    TransactionBodyBase,
     TransactionHeader,
     ExpireOptions,
     HoldUntilOptions,
@@ -234,7 +234,7 @@ __all__ = [
     "WriteDataResult",
 
     # base_transactions.py
-    "TransactionBody",
+    "TransactionBodyBase",
     "TransactionHeader",
     "ExpireOptions",
     "HoldUntilOptions",

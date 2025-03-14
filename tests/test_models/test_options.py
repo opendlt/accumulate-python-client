@@ -1,16 +1,16 @@
 # accumulate-python-client\tests\test_models\test_options.py
 
 import unittest
+from datetime import timedelta
 from accumulate.models.options import (
-    RangeOptions,
-    FindServiceOptions,
-    SubmitOptions,
-    ValidateOptions,
-    FaucetOptions,
-    SubscribeOptions,
-    ReceiptOptions,
+   RangeOptions,
+   SubmitOptions,
+   ValidateOptions,
+   FaucetOptions,
+   SubscribeOptions,
+   ReceiptOptions,
 )
-
+from accumulate.models.service import FindServiceOptions, FindServiceResult
 
 class TestRangeOptions(unittest.TestCase):
     def test_default_values(self):
@@ -40,17 +40,18 @@ class TestFindServiceOptions(unittest.TestCase):
         self.assertIsNone(options.timeout)
 
     def test_custom_values(self):
+        from accumulate.models.service import ServiceAddress
         """Test custom values for FindServiceOptions."""
         options = FindServiceOptions(
             network="testnet",
-            service="test_service",
+            service=ServiceAddress(service_type=123, argument=None),
             known=True,
-            timeout=5.0,
+            timeout=timedelta(seconds=5.0),
         )
         self.assertEqual(options.network, "testnet")
-        self.assertEqual(options.service, "test_service")
+        self.assertEqual(options.service.to_dict(), {"type": 123, "argument": None})
         self.assertTrue(options.known)
-        self.assertEqual(options.timeout, 5.0)
+        self.assertEqual(options.timeout, timedelta(seconds=5.0))
 
 
 class TestSubmitOptions(unittest.TestCase):

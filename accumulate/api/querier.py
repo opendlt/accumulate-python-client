@@ -25,7 +25,6 @@ from accumulate.api.context import RequestContext
 
 T = TypeVar("T", bound=Record)
 
-
 class Querier:
     """Handles queries related to accounts, transactions, records, and events."""
 
@@ -54,10 +53,6 @@ class Querier:
             error_message = f"Query failed: {e}"
             self.logger.error(error_message)
             raise AccumulateError(error_message) from e
-
-
-
-
 
     async def query_record(self, ctx: RequestContext, scope: URL, query: Query, result_type: Type[T]) -> T:
         """Submit a query for a specific record type."""
@@ -101,9 +96,6 @@ class Querier:
             error_message = f"Error in query_events: {e}"
             self.logger.error(error_message)
             raise AccumulateError(error_message) from e
-
-
-
 
 
     def _deserialize_response(self, data: Any, result_type: Type[T]) -> T:

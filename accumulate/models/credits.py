@@ -47,3 +47,4 @@ class CreditsAccount:
             return False
         self.credit_balance -= amount
         return True
+
