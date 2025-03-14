@@ -51,30 +51,23 @@ pip install accumulate-python-client
 
 ---
 
+
+
 ## Quick Start & Usage
 
-Here’s how to get started with the Accumulate Python Client:
+### End points: 
+- Testnet: https://testnet.accumulatenetwork.io/v2
+- Mainnet: https://mainnet.accumulatenetwork.io/v2
 
-```python
-from accumulate.api.client import AccumulateClient
 
-# Initialize the client
-client = AccumulateClient(base_url="<Endpoint>")
+### Quick Start Examples for accumulate-python-client:
 
-# Endpoints
-# Testnet: https://testnet.accumulatenetwork.io/v2
-# Mainnet: https://mainnet.accumulatenetwork.io/v2
-
-```markdown
-# Quick Start Examples for accumulate-python-client
-
-Sample code below demonstrates library use to:
+Below sample code demonstrates library use to:
 - Create a Lite Token Account
 - Testnet Faucet for testnet ACME tokens
 - Purchase credits
 - Transfer tokens between Lite Token Accounts
 - Create a human readable Accumulate Digitial Identifer (ADI) 
-```
 
 ```python
 import asyncio
