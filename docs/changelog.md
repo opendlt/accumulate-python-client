@@ -19,3 +19,8 @@ All notable changes to this project will be documented in this file
 ### Added
 - Initial release of Accumulate Python Client
 - Full API V3 client setup for interacting with Accumulate blockchain
+
+## [0.1.1] - 2025-03-25
+
+### Added
+- Docuementation update for PyPi

@@ -4,13 +4,13 @@ from setuptools import setup, find_packages
 
 setup(
     name="accumulate-python-client",
-    version="0.1.0",
+    version="0.1.1",
     description="Python SDK for Accumulate Blockchain API",
     long_description=open("README.md", "r").read(),
     long_description_content_type="text/markdown",
     url="https://github.com/opendlt/accumulate-python-client",
     author="JKG",
-    author_email="ifo@opendlt.org",
+    author_email="jason@kompendium.co",
     license="MIT",
     classifiers=[
         "Programming Language :: Python :: 3.8",
