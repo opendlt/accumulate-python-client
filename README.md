@@ -16,6 +16,21 @@ The **Accumulate Python Client** is a robust library designed for developers to 
 
 ---
 
+## Full Documentation
+
+Full documentation, including **usage instructions, examples, and API references**, is available here:
+
+👉 **[View Full Documentation](https://opendlt.github.io/accumulate-python-client/)**
+
+### Key Sections:
+- [API Reference](https://opendlt.github.io/accumulate-python-client/api_reference/)
+- [Getting Started](https://opendlt.github.io/accumulate-python-client/getting_started/)
+- [Examples](https://opendlt.github.io/accumulate-python-client/examples/)
+- [Contributing](https://opendlt.github.io/accumulate-python-client/contributing/)
+- [Changelog](https://opendlt.github.io/accumulate-python-client/changelog/)
+
+---
+
 ## Installation
 
 Prerequisites
@@ -268,14 +283,6 @@ accumulate-python-client/
 ├── setup.py               # Packaging and installation script
 └── pyproject.toml         # Build system configuration
 ```
-
----
-
-## Further Documentation
-
-Detailed usage instructions, examples, and API references are available in the `docs` directory. Key documentation includes:
-
-- [`docs/api_reference.md`](docs/api_reference.md): Comprehensive API details.
 
 ---
 
