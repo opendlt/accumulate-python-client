@@ -18,37 +18,41 @@ The **Accumulate Python Client** is a robust library designed for developers to 
 
 ## Installation
 
-Install the library using `pip`:
-
+Prerequisites
+```bash
+Python 3.8+
+pip (Python package manager)
+(Optional) git (to clone the repo)
+(Optional) virtualenv (recommended for isolated environments)
+```
+Option 1: Install via PyPI (Recommended for most users)
 ```bash
 pip install accumulate-python-client
 ```
 
-Prerequisites
+Option 2: Install from Source (for development or latest updates)
+Clone the repository
 ```bash
-Python 3.8+, pip, (optional) git, virtualenv
-```
-### 1. Clone repo
-```bash
-git clone https://github.com/opendlt/accumulate-python-client.git && cd accumulate-python-client
+git clone https://github.com/opendlt/accumulate-python-client.git
+cd accumulate-python-client
 ```
 
-### 2. (Recommended) Virtual environment
+(Recommended) Create and activate a virtual environment
+Windows:
 ```bash
-python -m venv venv  # Create venv
-venv\Scripts\activate  # Activate Windows
-source venv/bin/activate  # Activate macOS/Linux
+python -m venv venv
+venv\Scripts\activate
 ```
-### 3. Install dependencies
+macOS/Linux:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+Install dependencies
 ```bash
 pip install -r requirements.txt
 ```
-
-### Install via PyPI
-```bash
-pip install accumulate-python-client
-```
-
 ---
 
 ## Quick Start & Usage
@@ -295,4 +299,3 @@ This project is licensed under the terms of the MIT License. See the `LICENSE` f
 ## Acknowledgements
 
 This library was developed by **Jason Gregoire** for [OpenDLT.org](https://opendlt.org), with a mission to leverage Distributed Ledger Technology (DLT) for enhanced global freedom.
-```
