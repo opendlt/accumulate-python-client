@@ -24,11 +24,11 @@ Install the library using `pip`:
 pip install accumulate-python-client
 ```
 
-✅ Prerequisites
+Prerequisites
 ```bash
 Python 3.8+, pip, (optional) git, virtualenv
 ```
-### 1a. Clone repo
+### 1. Clone repo
 ```bash
 git clone https://github.com/opendlt/accumulate-python-client.git && cd accumulate-python-client
 ```
@@ -50,8 +50,6 @@ pip install accumulate-python-client
 ```
 
 ---
-
-
 
 ## Quick Start & Usage
 
