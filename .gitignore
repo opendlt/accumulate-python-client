@@ -1,5 +1,5 @@
 # Byte-compiled files
-__pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 
@@ -14,6 +14,7 @@ htmlcov/
 
 # pytest cache directory
 .pytest_cache/
+.cache/
 
 # Jupyter Notebook checkpoints
 .ipynb_checkpoints/
@@ -27,6 +28,7 @@ htmlcov/
 
 # Python packaging files
 *.egg-info/
+.eggs/
 build/
 dist/
 
@@ -34,3 +36,9 @@ dist/
 .vscode/
 .idea/
 *.swp
+
+# MkDocs
+site/
+
+# Ignore debug/test artifacts
+debug_*.json
