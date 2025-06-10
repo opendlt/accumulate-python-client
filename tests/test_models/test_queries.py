@@ -1,5 +1,9 @@
 # accumulate-python-client\tests\test_models\test_queries.py
 
+
+import pytest
+import base58
+from types import SimpleNamespace
 import unittest
 from accumulate.models.queries import (
     Query,
@@ -20,7 +24,6 @@ from accumulate.models.enums import QueryType
 from accumulate.api.exceptions import AccumulateError
 from accumulate.models.signature_types import SignatureType
 from accumulate.models.records import AccountRecord, ChainRecord, MessageRecord, RecordRange, UrlRecord, TxIDRecord, SignatureSetRecord, KeyRecord, ChainEntryRecord
-from accumulate.models.queries import BlockQuery  # for clarity
 from accumulate.utils.address_parse import parse_mh_address
 from accumulate.models.queries import AccumulateError
 
@@ -288,6 +291,129 @@ class TestQueries(unittest.TestCase):
         # Because the truncated URL string no longer starts with "acc://", we expect WrongSchemeError.
         with self.assertRaises(WrongSchemeError):
             CreditRecipient.unmarshal(truncated_data)
+
+
+# ————— BlockQuery.is_valid() error branches —————
+
+def test_block_query_requires_one_field():
+    with pytest.raises(AccumulateError, match="must specify at least one"):
+        BlockQuery().is_valid()
+
+def test_block_query_minor_and_minor_range_mutually_exclusive():
+    with pytest.raises(AccumulateError, match="Cannot specify both minor and minor_range"):
+        BlockQuery(minor=1, minor_range=RangeOptions(start=0, count=1)).is_valid()
+
+def test_block_query_major_and_major_range_mutually_exclusive():
+    with pytest.raises(AccumulateError, match="Cannot specify both major and major_range"):
+        BlockQuery(major=1, major_range=RangeOptions(start=0, count=1)).is_valid()
+
+def test_block_query_entry_range_conflict():
+    with pytest.raises(AccumulateError, match="EntryRange cannot be used with minor/major ranges"):
+        BlockQuery(entry_range=RangeOptions(start=0, count=1), minor_range=RangeOptions(start=0, count=1)).is_valid()
+
+def test_block_query_entry_range_must_specify_start_or_count():
+    # no start/count on entry_range
+    with pytest.raises(AccumulateError, match="EntryRange must specify"):
+        BlockQuery(minor=1, entry_range=RangeOptions(start=None, count=None)).is_valid()
+
+
+
+# ————— BlockQuery.to_dict() with ranges & omit_empty —————
+
+def test_block_query_to_dict_includes_all_fields():
+    minor_range = RangeOptions(start=2, count=3)
+    major_range = RangeOptions(start=4, count=5)
+    entry_range = RangeOptions(start=6, count=7)
+    q = BlockQuery(
+        minor=9,
+        major=10,
+        minor_range=minor_range,
+        major_range=major_range,
+        entry_range=entry_range,
+        omit_empty=True
+    )
+    d = q.to_dict()
+    assert d["queryType"] == "block"
+    assert d["minor"] == 9
+    assert d["major"] == 10
+    assert d["minor_range"] == minor_range.to_dict()
+    assert d["major_range"] == major_range.to_dict()
+    assert d["entry_range"] == entry_range.to_dict()
+    assert d["omit_empty"] is True
+
+
+# ————— DirectoryQuery & PendingQuery default to_dict() —————
+
+def test_directory_query_default_range():
+    q = DirectoryQuery()
+    d = q.to_dict()
+    assert d["queryType"] == "directory"
+    assert d["range"] == {"start": 0, "count": 10, "from_end": False, "expand": False}
+
+def test_pending_query_default_range():
+    q = PendingQuery()
+    d = q.to_dict()
+    assert d["queryType"] == "pending"
+    assert d["range"] == {"start": 0, "count": 10, "from_end": False, "expand": False}
+
+
+# ————— PublicKeySearchQuery._convert_to_hex() branches —————
+
+def test_public_key_search_query_mh_prefix(monkeypatch):
+    # override the name imported into the queries module
+    import accumulate.models.queries as qmod
+    fake = SimpleNamespace(hash=b"\x01\x02\x03")
+    monkeypatch.setattr(qmod, "parse_mh_address", lambda a: fake)
+    q = PublicKeySearchQuery("MHsomething", signature_type=SignatureType.RSA_SHA256)
+    assert q.public_key == b"\x01\x02\x03"
+    assert q.signature_type == SignatureType.RSA_SHA256
+
+def test_public_key_search_query_mh_invalid_hash(monkeypatch):
+    import accumulate.models.queries as qmod
+    fake = SimpleNamespace(hash="not_bytes")
+    monkeypatch.setattr(qmod, "parse_mh_address", lambda a: fake)
+    with pytest.raises(ValueError, match="Invalid MH address"):
+        PublicKeySearchQuery("MHbad")
+
+def test_public_key_search_query_hex_prefix():
+    q = PublicKeySearchQuery("0xdeadbeef")
+    assert q.public_key == bytes.fromhex("deadbeef")
+
+def test_public_key_search_query_raw_hex():
+    q = PublicKeySearchQuery("feedface")
+    assert q.public_key == bytes.fromhex("feedface")
+
+def test_public_key_search_query_base58():
+    raw = b"\x04\x05\x06"
+    b58 = base58.b58encode(raw).decode()
+    q = PublicKeySearchQuery(b58)
+    assert q.public_key == raw
+
+def test_public_key_search_query_base58_invalid():
+    with pytest.raises(ValueError, match="Invalid public key format"):
+        PublicKeySearchQuery("!!!notbase58")
+
+def test_public_key_search_query_invalid_signature_type():
+    with pytest.raises(ValueError, match="Invalid signature type"):
+        PublicKeySearchQuery("abcd", signature_type="not_a_type")
+
+
+# ————— PublicKeySearchQuery.is_valid() branches —————
+
+def test_public_key_search_query_is_valid_missing_key():
+    # "0x" → empty bytes
+    q = PublicKeySearchQuery("0x", signature_type=SignatureType.ED25519)
+    with pytest.raises(AccumulateError, match="Public key is required"):
+        q.is_valid()
+
+def test_public_key_search_query_is_valid_bad_sigtype():
+    q = PublicKeySearchQuery("abcd")
+    q.signature_type = None
+    with pytest.raises(AccumulateError, match="Signature type must be a valid"):
+        q.is_valid()
+
+
+
 
 if __name__ == "__main__":
     unittest.main()

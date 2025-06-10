@@ -1,5 +1,8 @@
 # accumulate-python-client\tests\test_utils\test_hash_functions.py
 
+import sys
+import builtins
+import importlib
 import pytest
 import hashlib
 from eth_utils import keccak
@@ -17,6 +20,11 @@ from accumulate.utils.hash_functions import (
 from accumulate.utils.encoding import EncodingError
 
 
+from accumulate.utils.hash_functions import (
+    EncodingError as ImportedEncodingError,
+)
+
+
 # Helper Function
 def generate_test_key(key_type="btc") -> bytes:
     """
@@ -32,6 +40,11 @@ def generate_test_key(key_type="btc") -> bytes:
         return b"\x01" * 32  # Ed25519 public key
     else:
         raise ValueError("Unsupported key type. Use 'btc', 'eth', or 'ed25519'.")
+
+
+
+
+
 
 
 # Tests for `public_key_hash`
@@ -129,3 +142,94 @@ def test_lite_authority_for_hash():
     authority = LiteAuthorityForHash(key_hash)
     assert isinstance(authority, str)
     assert len(authority) > 0
+
+
+# Re-use your helper
+def generate_test_key(key_type="btc") -> bytes:
+    if key_type == "btc":
+        return b"\x02" + b"\x01" * 32
+    elif key_type == "eth":
+        return b"\x01" * 32 + b"\x02" * 32
+    elif key_type == "ed25519":
+        return b"\x01" * 32
+    else:
+        raise ValueError("Unsupported key type.")
+
+
+# --- public_key_hash branches ---
+def test_public_key_hash_standard():
+    key = generate_test_key("ed25519")
+    assert public_key_hash(key, SignatureType.ED25519) == hashlib.sha256(key).digest()
+
+def test_public_key_hash_rcd1():
+    key = b"\x11" * 32
+    expected = hashlib.sha256(b"RCD" + key).digest()
+    assert public_key_hash(key, SignatureType.RCD1) == expected
+
+def test_public_key_hash_unsupported():
+    with pytest.raises(ValueError, match="Unsupported signature type"):
+        public_key_hash(b"foo", SignatureType.UNKNOWN)
+
+
+# --- compute_hash raw-bytes branch ---
+def test_compute_hash_bytes():
+    data = b"hello world"
+    assert compute_hash(data) == hashlib.sha256(data).digest()
+
+# --- compute_hash missing marshal_binary ---
+def test_compute_hash_no_marshal():
+    with pytest.raises(ImportedEncodingError, match="must implement a `marshal_binary` method"):
+        compute_hash(object())
+
+# --- compute_hash marshal_binary raises ---
+class BadBinary:
+    def marshal_binary(self):
+        raise RuntimeError("boom")
+
+def test_compute_hash_marshal_error():
+    with pytest.raises(ImportedEncodingError, match="Failed to marshal object for hashing"):
+        compute_hash(BadBinary())
+
+
+# --- btc_address and eth_address branches already covered by your existing tests ---
+
+
+# --- hash_data branches ---
+def test_hash_data_invalid_type():
+    with pytest.raises(ValueError, match="Input must be of type bytes"):
+        hash_data("not-bytes")
+
+
+# --- LiteAuthorityForKey / Hash already covered ---
+
+
+# --- fallback EncodingError import branch ---
+def test_hash_functions_fallback_encoding_error(monkeypatch):
+    # Remove real encoding module so import fails
+    encoding_mod = sys.modules.pop("accumulate.utils.encoding", None)
+    hf_name = "accumulate.utils.hash_functions"
+    old_hf = sys.modules.pop(hf_name, None)
+
+    orig_import = builtins.__import__
+    def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+        if name.startswith("accumulate.utils.encoding"):
+            raise ImportError()
+        return orig_import(name, globals, locals, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+    try:
+        hf = importlib.import_module(hf_name)
+        importlib.reload(hf)  # re-trigger the try/except at top‐level
+        # This EncodingError must be the fallback one, not the real one
+        fb = hf.EncodingError("fallback!")
+        assert isinstance(fb, Exception)
+        assert str(fb) == "fallback!"
+    finally:
+        # Restore
+        monkeypatch.setattr(builtins, "__import__", orig_import)
+        if encoding_mod is not None:
+            sys.modules["accumulate.utils.encoding"] = encoding_mod
+        if old_hf is not None:
+            sys.modules[hf_name] = old_hf
+        else:
+            importlib.reload(importlib.import_module(hf_name))

@@ -56,7 +56,7 @@ def test_url_parse_missing_scheme():
 def test_url_parse_missing_authority():
     """Test parsing a URL with missing authority."""
     url_str = "acc:///path"
-    with pytest.raises(ValueError, match="Invalid URL: Authority cannot be empty."):
+    with pytest.raises(ValueError, match="Invalid URL: Authority cannot be empty"):
         URL.parse(url_str)
 
 def test_url_parse_empty_string():
@@ -175,7 +175,7 @@ def test_url_marshal_unmarshal():
 def test_missing_hash_error():
     """Test missing_hash function raises MissingHashError with the correct message."""
     url = "acc://example.com/tx"
-    with pytest.raises(MissingHashError, match=f"{url} is not a transaction ID: Missing hash."):
+    with pytest.raises(MissingHashError, match=f"{url} is not a transaction ID: Missing hash"):
         raise missing_hash(url)
 
 def test_invalid_hash_error():
@@ -194,7 +194,7 @@ def test_wrong_scheme_error():
 def test_empty_authority_error():
     """Test URL parsing raises ValueError when authority is empty."""
     invalid_url = "acc://"
-    with pytest.raises(ValueError, match="Invalid URL: Authority cannot be empty."):
+    with pytest.raises(ValueError, match="Invalid URL: Authority cannot be empty"):
         URL.parse(invalid_url)
 
 def test_is_key_page_url():

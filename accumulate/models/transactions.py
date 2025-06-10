@@ -1725,6 +1725,13 @@ class TransferCredits(TransactionBodyBase):
     def type(self) -> TransactionType:
         return TransactionType.TRANSFER_CREDITS
 
+    def fields_to_encode(self):
+        # TO DO
+        # Required by TransactionBodyBase, but we override marshal() directly,
+        # so there are no “generic” fields to encode here.
+        return []
+
+
     def marshal(self) -> bytes:
         """Serialize TransferCredits transaction to bytes."""
         print("DEBUG: Marshaling TransferCredits")

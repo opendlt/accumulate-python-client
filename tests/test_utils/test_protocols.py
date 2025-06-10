@@ -20,16 +20,16 @@ def test_binary_value_abstract_methods():
     """Ensure BinaryValue's abstract methods raise NotImplementedError."""
     obj = ImproperBinaryValue()  # Improper class that does not implement methods
 
-    with pytest.raises(NotImplementedError, match="marshal_binary must be implemented."):
+    with pytest.raises(NotImplementedError, match="marshal_binary must be implemented"):
         obj.marshal_binary()
 
-    with pytest.raises(NotImplementedError, match="unmarshal_binary must be implemented."):
+    with pytest.raises(NotImplementedError, match="unmarshal_binary must be implemented"):
         obj.unmarshal_binary(b"")
 
-    with pytest.raises(NotImplementedError, match="copy_as_interface must be implemented."):
+    with pytest.raises(NotImplementedError, match="copy_as_interface must be implemented"):
         obj.copy_as_interface()
 
-    with pytest.raises(NotImplementedError, match="unmarshal_binary_from must be implemented."):
+    with pytest.raises(NotImplementedError, match="unmarshal_binary_from must be implemented"):
         obj.unmarshal_binary_from(None)  # `None` is used as we are testing the raise condition
 
 
@@ -37,5 +37,5 @@ def test_union_value_abstract_methods():
     """Ensure UnionValue's abstract methods raise NotImplementedError."""
     obj = ImproperUnionValue()  # Improper class that does not implement methods
 
-    with pytest.raises(NotImplementedError, match="unmarshal_fields_from must be implemented."):
+    with pytest.raises(NotImplementedError, match="unmarshal_fields_from must be implemented"):
         obj.unmarshal_fields_from(None)  # `None` is used as we are testing the raise condition

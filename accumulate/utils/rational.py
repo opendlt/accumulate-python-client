@@ -30,10 +30,3 @@ class Rational:
     def __repr__(self):
         return f"Rational({self.numerator}, {self.denominator})"
 
-# Example Usage
-if __name__ == "__main__":
-    r = Rational(2, 3)
-    print(f"Threshold for 10 keys: {r.threshold(10)}")  # Output: Threshold for 10 keys: 7
-
-    r.set(1, 4)
-    print(f"Threshold for 8 keys: {r.threshold(8)}")  # Output: Threshold for 8 keys: 2

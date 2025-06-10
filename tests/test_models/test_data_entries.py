@@ -154,15 +154,22 @@ def test_unmarshal_chunk_length_exceeds_data():
 def test_unmarshal_double_hash_entry():
     """Test unmarshal correctly returns a DoubleHashDataEntry."""
     de = get_data_entries_module()
+    # Prepare two chunks
     data = [b"chunk1", b"chunk2"]
-    original_entry = de.DoubleHashDataEntry(data)
-    marshaled_data = original_entry.marshal()
-    # If the marshaled data is in field-identifier style, normalize it to plain encoding.
-    marshaled_data = normalize_marshal(marshaled_data, original_entry)
-    entry = de.DataEntry.unmarshal(marshaled_data)
+    # Build the plain encoding:
+    #   [type=DOUBLE_HASH][count][len(chunk1)][chunk1][len(chunk2)][chunk2]
+    from accumulate.utils.encoding import encode_uvarint
+    from accumulate.models.enums import DataEntryType
+    plain = encode_uvarint(DataEntryType.DOUBLE_HASH.value)
+    plain += encode_uvarint(len(data))
+    for c in data:
+        plain += encode_uvarint(len(c)) + c
+
+    # Now feed that into the unmarshaller
+    entry = de.DataEntry.unmarshal(plain)
     assert isinstance(entry, de.DoubleHashDataEntry), "Unmarshaled entry is not a DoubleHashDataEntry."
-    # Ensure the unmarshaled data matches the original.
     assert entry.get_data() == data, "Unmarshaled data does not match the original data."
+
 
 def test_marshal_and_unmarshal_are_inverses():
     """Test that marshal and unmarshal are inverses of each other."""

@@ -1,6 +1,16 @@
 # accumulate-python-client\tests\test_utils\test_validation.py
 
 import pytest
+import asyncio
+from unittest.mock import AsyncMock, MagicMock
+
+from accumulate.utils.validation import process_signer_url
+from accumulate.utils.url import URL
+from accumulate.models.queries import Query
+from accumulate.models.enums import QueryType
+from accumulate.models.records import AccountRecord
+
+
 from accumulate.utils.validation import (
     validate_accumulate_url,
     is_reserved_url,
@@ -30,6 +40,106 @@ def test_validate_accumulate_url_valid():
         if isinstance(url, str):
             url = URL.parse(url)  # Ensure string inputs are parsed into URL objects
         assert validate_accumulate_url(url) is True
+
+
+
+
+@pytest.mark.asyncio
+async def test_lite_identity_signer():
+    mock_client = AsyncMock()
+    mock_client.query.return_value = AccountRecord(account={"type": "liteIdentity"})
+
+    url = URL.parse("acc://lite.identity")
+    result = await process_signer_url(url, client=mock_client)
+
+    assert result == {
+        "url": str(url),
+        "signer_type": "liteIdentity",
+        "signer_version": 1
+    }
+
+
+@pytest.mark.asyncio
+async def test_lite_token_account_signer():
+    mock_client = AsyncMock()
+    mock_client.query.return_value = AccountRecord(account={"type": "liteTokenAccount"})
+
+    url = URL.parse("acc://lite.token/ACME")
+    result = await process_signer_url(url, client=mock_client)
+
+    assert result == {
+        "url": "acc://lite.token",
+        "signer_type": "liteTokenAccount",
+        "signer_version": 1
+    }
+
+
+@pytest.mark.asyncio
+async def test_key_page_signer():
+    mock_client = AsyncMock()
+    mock_client.query.return_value = AccountRecord(account={"type": "keyPage", "version": 3})
+
+    url = URL.parse("acc://adi.acme/page/1")
+    result = await process_signer_url(url, client=mock_client)
+
+    assert result == {
+        "url": str(url),
+        "signer_type": "keyPage",
+        "signer_version": 3
+    }
+
+
+@pytest.mark.asyncio
+async def test_adi_signer():
+    mock_client = AsyncMock()
+    mock_client.query.return_value = AccountRecord(account={"type": "custom.acme"})
+
+    url = URL.parse("acc://custom.acme")
+    result = await process_signer_url(url, client=mock_client)
+
+    assert result == {
+        "url": str(url),
+        "signer_type": "adi",
+        "signer_version": 1
+    }
+
+
+@pytest.mark.asyncio
+async def test_unknown_account_type():
+    mock_client = AsyncMock()
+    mock_client.query.return_value = AccountRecord(account={"type": "unknownType"})
+
+    url = URL.parse("acc://weird.account")
+    result = await process_signer_url(url, client=mock_client)
+
+    assert result["signer_type"] == "unknown"
+    assert result["signer_version"] == 1
+
+
+@pytest.mark.asyncio
+async def test_unexpected_response_format():
+    # Not an AccountRecord instance
+    mock_client = AsyncMock()
+    mock_client.query.return_value = {"not": "account"}
+
+    url = URL.parse("acc://bad.response")
+    result = await process_signer_url(url, client=mock_client)
+
+    assert result["signer_type"] == "unknown"
+    assert result["signer_version"] == 1
+
+
+@pytest.mark.asyncio
+async def test_query_raises_exception():
+    mock_client = AsyncMock()
+    mock_client.query.side_effect = Exception("Connection error")
+
+    url = URL.parse("acc://error.url")
+    result = await process_signer_url(url, client=mock_client)
+
+    assert result["signer_type"] == "unknown"
+    assert result["signer_version"] == 1
+
 
 
 

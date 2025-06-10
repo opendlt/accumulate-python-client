@@ -3,6 +3,7 @@
 from accumulate.utils.validation import ValidationError
 import pytest
 import hashlib
+from types import SimpleNamespace
 from unittest.mock import Mock, MagicMock, patch
 from cryptography.hazmat.primitives.asymmetric import ed25519, rsa, ec, padding
 from accumulate.signing.signature_handler import SignatureHandler
@@ -15,6 +16,8 @@ from cryptography.hazmat.primitives.asymmetric.utils import Prehashed
 from accumulate.models.signatures import Signature
 from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
 from eth_keys.exceptions import BadSignature
+
+
 
 # Helper Functions
 def generate_ed25519_keys():
@@ -501,3 +504,27 @@ def test_verify_eth_unexpected_exception2():
     #  Correctly mock `eth_keys.datatypes.Signature` instead of `eth_keys.Signature`
     with patch("eth_keys.datatypes.Signature", side_effect=Exception("Unexpected Error")):
         assert SignatureHandler.verify_eth(public_key, message_hash, signature) is False
+
+def test_verify_merkle_hash_exception_path():
+    # Force an exception in metadata_hash + txn_hash (None + bytes → TypeError)
+    bad_sig = SimpleNamespace(transactionHash=b'whatever')
+    assert SignatureHandler.verify_merkle_hash(None, b'', bad_sig) is False
+
+def test_verify_btc_exception_path():
+    # Use a malformed public key so from_encoded_point raises
+    bad_pub = b'\x00'*10
+    bad_sig  = b'invalid'
+    assert SignatureHandler.verify_btc(bad_pub, b'msg', bad_sig) is False
+
+def test_sign_eth_exception_path():
+    # Private key must be 32 bytes; anything else will make eth_keys.PrivateKey() blow up
+    with pytest.raises(ValueError, match="Failed to sign Ethereum message"):
+        SignatureHandler.sign_eth(b'\x01'*31, hashlib.sha256(b"x").digest())
+
+def test_verify_signature_with_timestamp_unsupported_type():
+    # Pick a type not in the verification_methods map (e.g. RCD1)
+    sig = SimpleNamespace(signature=b'')
+    with pytest.raises(ValueError, match=r"Unsupported signature type: .*RCD1"):
+        SignatureHandler.verify_signature_with_timestamp(
+            b'\x00', b'data', sig, SignatureType.RCD1
+        )

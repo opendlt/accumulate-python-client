@@ -1,5 +1,6 @@
 # accumulate-python-client\accumulate\api\client.py 
 
+import accumulate.api.client as client_module
 import json
 import os
 import inspect
